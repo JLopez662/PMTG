@@ -42,6 +42,6 @@ You can install these libraries using pip with the following command:
 
 6. **Open and view the Chronogram**
   Open the chronogram.xlsx file in Excel to view your visual chronogram.
-
-
+  - For this input: 40, 40, 60, 32, 8, 24, 40, 160, the excel file would display a chronogram like this example:
+![Chronogram Example](./chronogram%20excel.png)
 
