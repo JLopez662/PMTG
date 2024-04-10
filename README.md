@@ -4,9 +4,9 @@ Generates a visual chronogram in Excel, mapping out task hours across workweeks 
 
 ## Purpose
 
-The ScheduleChronogram tool is designed to help project managers and teams to create detailed chronograms for their proposals or projects. 
+The ScheduleChronogram serves as an automated solution for generating detailed chronograms directly in Excel, ideal for project managers and teams.
 
-It simplifies the process of translating complex project timelines into clear, visual formats, enabling stakeholders to easily understand and follow the project's progress.
+It simplifies the grouping of tasks throughout workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
 
 ## Prerequisites
 ### Python:
