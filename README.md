@@ -4,7 +4,9 @@ Generates a visual chronogram in Excel, mapping out task hours across workweeks 
 
 ## Purpose
 
-The ScheduleChronogram tool is designed to help project managers and teams visualize the allocation of task hours across workweeks, facilitating clear and effective project planning and time management.
+The ScheduleChronogram serves as an automated solution for generating detailed chronograms directly in Excel, ideal for project managers and teams.
+
+It simplifies the grouping of tasks throughout workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
 
 ## Prerequisites
 ### Python:
@@ -47,5 +49,5 @@ You can install these libraries using pip with the following command:
 6. **Open and view the Chronogram**
   Open the chronogram.xlsx file in Excel to view your visual chronogram.
   - For this input: 40, 40, 60, 32, 8, 24, 40, 160, the excel file would display a chronogram like this example:
-![Chronogram Example](./chronogram_excel.png)
+![Chronogram Example](./chronogram_excel1.png)
 
