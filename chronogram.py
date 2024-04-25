@@ -51,15 +51,18 @@ def validate_date(date_text):
     
 # Function to calculate date ranges for each week, spanning 7 days each
 def get_week_dates(start_date, num_weeks, year):
-    week_dates = []
-    start_date = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")
-    for i in range(num_weeks + 1):
-        end_date = start_date + timedelta(days=6)
-        # Format the date as '01/Feb - 07/Feb'
-        week_dates.append(f'{start_date.strftime("%d/%b")} - {end_date.strftime("%d/%b")}')
-        start_date = end_date + timedelta(days=1)
-    return week_dates
-    
+    if not start_date:  # If start_week is empty
+        # Return week numbers instead of dates
+        return [f'Week {i+1}' for i in range(num_weeks + 1)]
+    else:
+        week_dates = []
+        start_date = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")
+        for i in range(num_weeks + 1):
+            end_date = start_date + timedelta(days=6)
+            week_dates.append(f'{start_date.strftime("%d/%b")} - {end_date.strftime("%d/%b")}')
+            start_date = end_date + timedelta(days=1)
+        return week_dates
+
 
 def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     #Create DataFrame from chronogram
@@ -98,35 +101,39 @@ def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     year_cell.font = Font(color="FFFFFF")
 
     # Insert month headers aligned with the week date ranges
-    week_dates = get_week_dates(start_week, last_data_column - 2, year)  # -2 accounts for the index and the initial space
-    months = {}
-    for i, week_date in enumerate(week_dates, start=2):  # start=2 to account for the initial empty column
-        month_name = datetime.strptime(week_date.split(' - ')[0], "%d/%b").strftime("%B")
-        if month_name not in months:
-            months[month_name] = {'start': i, 'end': i}
-        else:
-            months[month_name]['end'] = i
-
-    # Add month headers starting from the second row
+    week_dates = get_week_dates(start_week, last_data_column - 2, year)  # -2 accounts for the index and the initial space 
+    # Handling week labels or date ranges for headers
+    
     row_offset = 2
-    for month, cols in sorted(months.items()):
-        ws.merge_cells(start_row=2, start_column=cols['start'], end_row=2, end_column=cols['end'])
-        month_cell = ws.cell(row=row_offset, column=cols['start'])
-        month_cell.value = month
-        #month_cell.alignment = Alignment(horizontal='center')
-        month_cell.fill = PatternFill(start_color="0070c0", end_color="0070c0", fill_type="solid")
-        month_cell.font = Font(color="FFFFFF")
-
-    # Adjust the row offset to start adding week dates
-    row_offset += 1
-
-    # Add week dates below month headers
-    for col, date_range in enumerate(week_dates, start=2):  # Again, start=2 for the initial empty column
-        week_cell = ws.cell(row=row_offset, column=col)
-        week_cell.value = date_range
-        week_cell.alignment = Alignment(horizontal='center')
-        week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-        week_cell.font = Font(color="FFFFFF")
+    if not start_week:  # If start_week is empty, directly use week labels
+        for i, label in enumerate(week_dates, start=2):
+            cell = ws.cell(row=row_offset, column=i)
+            cell.value = label
+            cell.alignment = Alignment(horizontal='center')
+            cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            cell.font = Font(color="FFFFFF")
+    else:  # Process as usual for date ranges
+        months = {}
+        for i, date_range in enumerate(week_dates, start=2):
+            month_name = datetime.strptime(date_range.split(' - ')[0], "%d/%b").strftime("%B")
+            if month_name not in months:
+                months[month_name] = {'start': i, 'end': i}
+            else:
+                months[month_name]['end'] = i
+        for month, cols in sorted(months.items()):
+            ws.merge_cells(start_row=row_offset, start_column=cols['start'], end_row=row_offset, end_column=cols['end'])
+            month_cell = ws.cell(row=row_offset, column=cols['start'])
+            month_cell.value = month
+            month_cell.alignment = Alignment(horizontal='center')
+            month_cell.fill = PatternFill(start_color="0070c0", end_color="0070c0", fill_type="solid")
+            month_cell.font = Font(color="FFFFFF")
+        row_offset += 1  # Increment to start adding week dates
+        for col, date_range in enumerate(week_dates, start=2):
+            week_cell = ws.cell(row=row_offset, column=col)
+            week_cell.value = date_range
+            week_cell.alignment = Alignment(horizontal='center')
+            week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            week_cell.font = Font(color="FFFFFF")
 
     # Now adjust row_offset to start adding tasks below the week headers
     row_offset += 1
@@ -157,29 +164,29 @@ def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     #ws.cell(row=1, column=1).fill=PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
 ################
 
-# Ask user for the year for the Gantt Chart
-yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ")
-if not yearInput.strip():
-    yearInput = str(datetime.now().year)
+# ... your existing imports and function definitions ...
 
+# ... your existing imports and function definitions ...
+
+# Ask user for the year for the Gantt Chart
+yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ").strip()
+year = int(yearInput) if yearInput else datetime.now().year
 
 # Prompt the user for the starting week, now expecting MM/DD format
-start_week = input("Add the starting week (MM/DD) (leave empty if not): ")
+start_week = input("Add the starting week (MM/DD) (leave empty if not): ").strip()
 while start_week and not validate_date(start_week):
-    start_week = input("The format is incorrect. Please use MM/DD format or leave empty: ")
+    start_week = input("The format is incorrect. Please use MM/DD format or leave empty: ").strip()
 
-
-#Ask user for input (hours as separated values by comma)
+# Ask user for input (hours as separated values by comma)
 taskHoursInput = input("Add tasks hours (as comma-separated values): ")
-
-#Convert input string removing extra spaces and split input into a list of integers
 tasks = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
-#Generate the chronogram from user input
+# Generate the chronogram from user input
 chronogram = allocateTasksToWeeks(tasks)
 
-#Save chronogram to Excel with colored cells format
-chronogramToExcel(chronogram, yearInput, start_week, "chronogram.xlsx")
+# Call the function to save the chronogram to an Excel file
+chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", "chronogram.xlsx")
+
 
 
 

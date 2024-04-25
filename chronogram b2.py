@@ -51,15 +51,18 @@ def validate_date(date_text):
     
 # Function to calculate date ranges for each week, spanning 7 days each
 def get_week_dates(start_date, num_weeks, year):
-    week_dates = []
-    start_date = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")
-    for i in range(num_weeks + 1):
-        end_date = start_date + timedelta(days=6)
-        # Format the date as '01/Feb - 07/Feb'
-        week_dates.append(f'{start_date.strftime("%d/%b")} - {end_date.strftime("%d/%b")}')
-        start_date = end_date + timedelta(days=1)
-    return week_dates
-    
+    if not start_date:  # If start_week is empty
+        # Return week numbers instead of dates
+        return [f'Week {i+1}' for i in range(num_weeks + 1)]
+    else:
+        week_dates = []
+        start_date = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")
+        for i in range(num_weeks + 1):
+            end_date = start_date + timedelta(days=6)
+            week_dates.append(f'{start_date.strftime("%d/%b")} - {end_date.strftime("%d/%b")}')
+            start_date = end_date + timedelta(days=1)
+        return week_dates
+
 
 def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     #Create DataFrame from chronogram
@@ -157,29 +160,29 @@ def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     #ws.cell(row=1, column=1).fill=PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
 ################
 
-# Ask user for the year for the Gantt Chart
-yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ")
-if not yearInput.strip():
-    yearInput = str(datetime.now().year)
+# ... your existing imports and function definitions ...
 
+# ... your existing imports and function definitions ...
+
+# Ask user for the year for the Gantt Chart
+yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ").strip()
+year = int(yearInput) if yearInput else datetime.now().year
 
 # Prompt the user for the starting week, now expecting MM/DD format
-start_week = input("Add the starting week (MM/DD) (leave empty if not): ")
+start_week = input("Add the starting week (MM/DD) (leave empty if not): ").strip()
 while start_week and not validate_date(start_week):
-    start_week = input("The format is incorrect. Please use MM/DD format or leave empty: ")
+    start_week = input("The format is incorrect. Please use MM/DD format or leave empty: ").strip()
 
-
-#Ask user for input (hours as separated values by comma)
+# Ask user for input (hours as separated values by comma)
 taskHoursInput = input("Add tasks hours (as comma-separated values): ")
-
-#Convert input string removing extra spaces and split input into a list of integers
 tasks = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
-#Generate the chronogram from user input
+# Generate the chronogram from user input
 chronogram = allocateTasksToWeeks(tasks)
 
-#Save chronogram to Excel with colored cells format
-chronogramToExcel(chronogram, yearInput, start_week, "chronogram.xlsx")
+# Call the function to save the chronogram to an Excel file
+chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", "chronogram.xlsx")
+
 
 
 
