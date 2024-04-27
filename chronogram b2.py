@@ -101,35 +101,39 @@ def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     year_cell.font = Font(color="FFFFFF")
 
     # Insert month headers aligned with the week date ranges
-    week_dates = get_week_dates(start_week, last_data_column - 2, year)  # -2 accounts for the index and the initial space
-    months = {}
-    for i, week_date in enumerate(week_dates, start=2):  # start=2 to account for the initial empty column
-        month_name = datetime.strptime(week_date.split(' - ')[0], "%d/%b").strftime("%B")
-        if month_name not in months:
-            months[month_name] = {'start': i, 'end': i}
-        else:
-            months[month_name]['end'] = i
-
-    # Add month headers starting from the second row
+    week_dates = get_week_dates(start_week, last_data_column - 2, year)  # -2 accounts for the index and the initial space 
+    # Handling week labels or date ranges for headers
+    
     row_offset = 2
-    for month, cols in sorted(months.items()):
-        ws.merge_cells(start_row=2, start_column=cols['start'], end_row=2, end_column=cols['end'])
-        month_cell = ws.cell(row=row_offset, column=cols['start'])
-        month_cell.value = month
-        #month_cell.alignment = Alignment(horizontal='center')
-        month_cell.fill = PatternFill(start_color="0070c0", end_color="0070c0", fill_type="solid")
-        month_cell.font = Font(color="FFFFFF")
-
-    # Adjust the row offset to start adding week dates
-    row_offset += 1
-
-    # Add week dates below month headers
-    for col, date_range in enumerate(week_dates, start=2):  # Again, start=2 for the initial empty column
-        week_cell = ws.cell(row=row_offset, column=col)
-        week_cell.value = date_range
-        week_cell.alignment = Alignment(horizontal='center')
-        week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-        week_cell.font = Font(color="FFFFFF")
+    if not start_week:  # If start_week is empty, directly use week labels
+        for i, label in enumerate(week_dates, start=2):
+            cell = ws.cell(row=row_offset, column=i)
+            cell.value = label
+            cell.alignment = Alignment(horizontal='center')
+            cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            cell.font = Font(color="FFFFFF")
+    else:  # Process as usual for date ranges
+        months = {}
+        for i, date_range in enumerate(week_dates, start=2):
+            month_name = datetime.strptime(date_range.split(' - ')[0], "%d/%b").strftime("%B")
+            if month_name not in months:
+                months[month_name] = {'start': i, 'end': i}
+            else:
+                months[month_name]['end'] = i
+        for month, cols in sorted(months.items()):
+            ws.merge_cells(start_row=row_offset, start_column=cols['start'], end_row=row_offset, end_column=cols['end'])
+            month_cell = ws.cell(row=row_offset, column=cols['start'])
+            month_cell.value = month
+            month_cell.alignment = Alignment(horizontal='center')
+            month_cell.fill = PatternFill(start_color="0070c0", end_color="0070c0", fill_type="solid")
+            month_cell.font = Font(color="FFFFFF")
+        row_offset += 1  # Increment to start adding week dates
+        for col, date_range in enumerate(week_dates, start=2):
+            week_cell = ws.cell(row=row_offset, column=col)
+            week_cell.value = date_range
+            week_cell.alignment = Alignment(horizontal='center')
+            week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            week_cell.font = Font(color="FFFFFF")
 
     # Now adjust row_offset to start adding tasks below the week headers
     row_offset += 1
