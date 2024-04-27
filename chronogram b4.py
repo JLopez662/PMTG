@@ -227,6 +227,16 @@ def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
         for cell in col:
             ws.column_dimensions[get_column_letter(cell.column)].width = column_width
 
+    # Merge cells for the "Task Name" header from C1 to C3
+    ws.merge_cells(start_row=1, start_column=3, end_row=3, end_column=3)
+    
+    # Apply styles and set the value for the "Task Name" header
+    task_name_header_cell = ws.cell(row=1, column=3)
+    task_name_header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
+    task_name_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+    task_name_header_cell.font = Font(color="FFFFFF", bold=True)
+    task_name_header_cell.value = "Activity"
+
     # Create and style "Start Date" and "End Date" headers
     ws.merge_cells(start_row=1, start_column=4, end_row=3, end_column=4)  # Merge cells for "Start Date"
     ws.merge_cells(start_row=1, start_column=5, end_row=3, end_column=5)  # Merge cells for "End Date"

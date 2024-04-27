@@ -94,7 +94,7 @@ def add_task_dates(chronogram, start_date, ws, year):
             ws.cell(row=index+3, column=4, value=task_start_date.strftime("%m/%d"))
             ws.cell(row=index+3, column=5, value=task_end_date.strftime("%m/%d"))
 
-def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
+def chronogramToExcel(chronogram, year, start_week, activity_names, filename="chronogram.xlsx"):
     # Start from column F (which is index 5 in zero-indexed systems)
     start_col_index = 6
 
@@ -226,11 +226,24 @@ def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
         for cell in col:
             ws.column_dimensions[get_column_letter(cell.column)].width = column_width
+    
+    # Create and style "Activity" header in column C
+    ws.merge_cells(start_row=1, start_column=3, end_row=3, end_column=3)
+    activity_header_cell = ws.cell(row=1, column=3)
+    activity_header_cell.value = "Activity"
+    activity_header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
+    activity_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+    activity_header_cell.font = Font(color="FFFFFF", bold=True)
+    
+    if activity_names:
+        # Add the activity names to column C, starting from the 4th row to match the task rows
+        for index, activity_name in enumerate(activity_names, start=4):
+            ws.cell(row=index, column=3, value=activity_name)
 
     # Create and style "Start Date" and "End Date" headers
     ws.merge_cells(start_row=1, start_column=4, end_row=3, end_column=4)  # Merge cells for "Start Date"
     ws.merge_cells(start_row=1, start_column=5, end_row=3, end_column=5)  # Merge cells for "End Date"
-    
+        
     start_date_header_cell = ws.cell(row=1, column=4)
     end_date_header_cell = ws.cell(row=1, column=5)
     
@@ -262,11 +275,15 @@ while start_week and not validate_date(start_week):
 taskHoursInput = input("Add tasks hours (as comma-separated values): ")
 tasks = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
+# Ask user for input (activity names as comma-separated values, or leave empty)
+activityNamesInput = input("Add the activities (as comma-separated values, or leave empty): ")
+activity_names = [x.strip() for x in re.split(r',\s*|\,', activityNamesInput) if x.strip()]
+
 # Generate the chronogram from user input
 chronogram = allocateTasksToWeeks(tasks)
 
 # Call the function to save the chronogram to an Excel file
-chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", "chronogram.xlsx")
+chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activity_names, "chronogram.xlsx")
 
 
 
