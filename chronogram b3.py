@@ -63,6 +63,29 @@ def get_week_dates(start_date, num_weeks, year):
             start_date = end_date + timedelta(days=1)
         return week_dates
 
+def add_task_dates(chronogram, start_date, ws, year):  # Added 'year' as an argument
+    if not start_date:
+        return  # If no start_date is provided, we cannot calculate dates
+
+    # Ensure the year is included in the start_date string
+    start_date_with_year = f"{start_date}/{year}"
+    current_date = datetime.strptime(start_date_with_year, "%m/%d/%Y")
+
+    for index, task_row in enumerate(chronogram, start=1):
+        task_hours = sum(40 if cell == 'X' else 0 for cell in task_row)  # Sum the 'X's as 40-hour workweeks
+        days = (task_hours // 40) * 7  # Convert hours to full work weeks then to days
+        end_date = current_date + timedelta(days=days-1) if days > 0 else current_date
+
+        # Set start and end date cells
+        ws.cell(row=index+3, column=4, value=current_date.strftime("%m/%d"))  # +3 because the tasks start from row 4
+        ws.cell(row=index+3, column=5, value=end_date.strftime("%m/%d"))
+
+        # Set the next task's start date to the next weekday
+        if days > 0:
+            current_date = end_date + timedelta(days=1)
+            if current_date.weekday() > 4:  # If it's Saturday or Sunday
+                current_date += timedelta(days=7-current_date.weekday())  # Skip to next Monday
+
 
 def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
     # Start from column F (which is index 5 in zero-indexed systems)
@@ -197,21 +220,27 @@ def chronogramToExcel(chronogram, year, start_week, filename="chronogram.xlsx"):
         for cell in col:
             ws.column_dimensions[get_column_letter(cell.column)].width = column_width
 
+    # Create and style "Start Date" and "End Date" headers
+    ws.merge_cells(start_row=1, start_column=4, end_row=3, end_column=4)  # Merge cells for "Start Date"
+    ws.merge_cells(start_row=1, start_column=5, end_row=3, end_column=5)  # Merge cells for "End Date"
+    
+    start_date_header_cell = ws.cell(row=1, column=4)
+    end_date_header_cell = ws.cell(row=1, column=5)
+    
+    start_date_header_cell.value = "Start Date"
+    end_date_header_cell.value = "End Date"
+    
+    for cell in [start_date_header_cell, end_date_header_cell]:
+        cell.alignment = Alignment(horizontal='center', vertical='bottom')
+        cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+        cell.font = Font(color="FFFFFF", bold=True)
+
+    # Before saving the workbook, call the function to add task start dates
+    add_task_dates(chronogram, start_week, ws, year)  # Pass 'year' as well
+
     # Save the workbook
     wb.save(filename)
     df.to_csv("chronogram.csv", index=False)  # Also save as CSV
-
-
-##########
-    #header = pd.DataFrame(columns=['2024'])
-
-    #df = pd.concat([header, df], axis=1)
-    #ws.cell(row=1, column=1).fill=PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
-################
-
-# ... your existing imports and function definitions ...
-
-# ... your existing imports and function definitions ...
 
 # Ask user for the year for the Gantt Chart
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ").strip()
