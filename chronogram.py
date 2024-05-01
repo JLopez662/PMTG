@@ -94,6 +94,24 @@ def add_task_dates(chronogram, start_date, ws, year):
             ws.cell(row=index+3, column=4, value=task_start_date.strftime("%m/%d"))
             ws.cell(row=index+3, column=5, value=task_end_date.strftime("%m/%d"))
 
+# Function to adjust column widths and text wrapping in your Excel file
+def adjust_column_settings(ws):
+    # Set wider column widths for specific columns
+    column_widths = {
+        'B': 5,  # Tasks column
+        'C': 30,  # Activity column
+        'D': 10,  # Start Date column
+        'E': 10,  # End Date column
+    }
+
+    for col, width in column_widths.items():
+        ws.column_dimensions[col].width = width
+
+    # Enable text wrapping
+    for row in ws.iter_rows(min_row=4, max_row=ws.max_row, min_col=2, max_col=3):
+        for cell in row:
+            cell.alignment = Alignment(wrap_text=True)
+
 def chronogramToExcel(chronogram, year, start_week, activity_names, filename="chronogram.xlsx"):
     # Start from column F (which is index 5 in zero-indexed systems)
     start_col_index = 6
@@ -207,7 +225,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
         ws.merge_cells(start_row=row_offset, start_column=cols['start'], end_row=row_offset, end_column=cols['end'])
         month_cell = ws.cell(row=row_offset, column=cols['start'])
         month_cell.value = month
-        month_cell.alignment = Alignment(horizontal='center')
+        month_cell.alignment = Alignment(horizontal='left', vertical='center', indent=1)
         month_cell.fill = PatternFill(start_color="0070c0", end_color="0070c0", fill_type="solid")
         month_cell.font = Font(color="FFFFFF")
 
@@ -222,7 +240,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
                 task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
 
     # Set column widths for the data starting from column F
-    column_width = 15
+    column_width = 18
     for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
         for cell in col:
             ws.column_dimensions[get_column_letter(cell.column)].width = column_width
@@ -257,6 +275,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
 
     # Before saving the workbook, call the function to add task start dates
     add_task_dates(chronogram, start_week, ws, year)  # Pass 'year' as well
+
+    # Adjust column settings before saving
+    adjust_column_settings(ws)
 
     # Save the workbook
     wb.save(filename)
