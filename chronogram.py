@@ -1,11 +1,12 @@
 import pandas as pd
 import re
+import calendar
 from datetime import timedelta, datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, Color, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.dataframe import dataframe_to_rows
-import calendar
+
 
 def allocateTasksToWeeks(tasks):
     colWeekHours = [40] #first column, representing a work week, or 40 hours
@@ -81,9 +82,6 @@ def get_week_dates(start_date, num_weeks, year):
 
     return week_dates
 
-
-
-# ... (previous code remains unchanged)
 
 # Check and correct any date discrepancies to prevent errors
 # Function to check and correct for leap year issues
@@ -319,7 +317,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
         for month_name, month_range in months.items():
             month_end_week = month_range['start'] + 3  # Default month span of 4 weeks
             if month_end_week >= actual_weeks_with_tasks + start_col_index - 1:
-                month_end_week = actual_weeks_with_tasks + start_col_index - 1
+                month_end_week = actual_weeks_with_tasks + start_col_index
             if month_end_week < month_range['start']:
                 month_end_week = month_range['start']  # Ensure the end week does not precede the start week
             months[month_name]['end'] = month_end_week
