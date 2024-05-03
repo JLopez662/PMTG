@@ -145,8 +145,8 @@ def adjust_column_settings(ws):
     column_widths = {
         'B': 5,  # Tasks column
         'C': 30,  # Activity column
-        'D': 10,  # Start Date column
-        'E': 10,  # End Date column
+        'D': 12,  # Start Date column
+        'E': 12,  # End Date column
     }
 
     for col, width in column_widths.items():
@@ -318,20 +318,23 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
         # First, adjust the end of each month to match the last week with a task or the end of the 4-week block
         for month_name, month_range in months.items():
             month_end_week = month_range['start'] + 3  # Default month span of 4 weeks
-            if month_end_week >= actual_weeks_with_tasks + start_col_index - 1:  # Adjusted this line
-                month_end_week = actual_weeks_with_tasks + start_col_index - 1  # Adjust to not go past the actual weeks with tasks
+            if month_end_week >= actual_weeks_with_tasks + start_col_index - 1:
+                month_end_week = actual_weeks_with_tasks + start_col_index - 1
+            if month_end_week < month_range['start']:
+                month_end_week = month_range['start']  # Ensure the end week does not precede the start week
             months[month_name]['end'] = month_end_week
+
 
         # Merge and fill cells for each month
         for month_name, month_range in months.items():
-            ws.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
-            for col_index in range(month_range['start'], month_range['end'] + 2):
-                month_cell = ws.cell(row=row_offset, column=col_index)
-                month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")  # Updated the color code
-                month_cell.font = Font(color="FFFFFF", bold=True)
-                if col_index == month_range['start']:  # Only write the month name in the first cell
-                    month_cell.value = month_name
-                    month_cell.alignment = Alignment(horizontal='center')
+            # Only merge if start is less than or equal to end to avoid ValueError in merging
+            if month_range['start'] <= month_range['end']:
+                ws.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
+                month_cell = ws.cell(row=row_offset, column=month_range['start'])
+                month_cell.value = month_name
+                month_cell.alignment = Alignment(horizontal='center')
+                month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+                month_cell.font = Font(color="FFFFFF")
 
 
     # Ensure accurate month headers are displayed without errors in the Excel sheet
@@ -421,7 +424,8 @@ tasks = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip(
 
 # Ask user for input (activity names as comma-separated values, or leave empty)
 activityNamesInput = input("Add the activities (as comma-separated values, or leave empty): ")
-activity_names = [x.strip() for x in re.split(r',\s*|\,', activityNamesInput) if x.strip()]
+activity_names = [x.strip() for x in activityNamesInput.split(',') if x.strip()]  # Split only on comma
+
 
 # Generate the chronogram from user input
 chronogram = allocateTasksToWeeks(tasks)
