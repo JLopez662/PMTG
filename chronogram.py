@@ -52,11 +52,16 @@ def validate_date(date_text):
     
 # Function to calculate date ranges for each week, spanning 7 days each
 def get_week_dates(start_date, num_weeks, year):
+    
+    if not start_date:
+    # Return generic week labels when no start date is provided
+        return [(f"Week {i+1}", year) for i in range(num_weeks + 1)]
+
     week_dates = []
     start_date_obj = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")
     current_date = start_date_obj
 
-    for _ in range(num_weeks + 2):  # Ensuring enough weeks are calculated
+    for _ in range(num_weeks + 1):  # Ensuring enough weeks are calculated
         end_date = current_date + timedelta(days=6)  # End of the week calculation
 
         if current_date.year != end_date.year:  # Handling the year transition
@@ -233,19 +238,20 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
 
     # Validate all date strings before proceeding to ensure accuracy
     for date_range, _ in week_dates:
-        start_str, end_str = date_range.split(' - ')
-        print("Start date string:", start_str)
-        print("End date string:", end_str)
+        if start_week:
+            start_str, end_str = date_range.split(' - ')
+            print("Start date string:", start_str)
+            print("End date string:", end_str)
 
-        # Check and correct any date discrepancies to prevent errors
-        try:
-            start_date = datetime.strptime(start_str, "%d/%b")
-            end_date = datetime.strptime(end_str, "%d/%b")
-            if start_date.month != end_date.month:
-                raise ValueError("Date range spans multiple months.")
-        except ValueError as e:
-            print("Error parsing start date:", e)
-            # Handle the exception gracefully and ensure correct date parsing
+            # Check and correct any date discrepancies to prevent errors
+            try:
+                start_date = datetime.strptime(start_str, "%d/%b")
+                end_date = datetime.strptime(end_str, "%d/%b")
+                if start_date.month != end_date.month:
+                    raise ValueError("Date range spans multiple months.")
+            except ValueError as e:
+                print("Error parsing start date:", e)
+                # Handle the exception gracefully and ensure correct date parsing
 
     
 
@@ -319,7 +325,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
         # Merge and fill cells for each month
         for month_name, month_range in months.items():
             ws.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
-            for col_index in range(month_range['start'], month_range['end'] + 1):
+            for col_index in range(month_range['start'], month_range['end'] + 2):
                 month_cell = ws.cell(row=row_offset, column=col_index)
                 month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")  # Updated the color code
                 month_cell.font = Font(color="FFFFFF", bold=True)
