@@ -183,7 +183,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
 
     # Merge cells for the year header starting from column F
     last_data_column = len(df.columns) + 1
-    ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
+    #ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
 
     # Set the value for the year header and apply styles
     '''
@@ -194,24 +194,37 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
     year_cell.font = Font(color="FFFFFF", bold=True)
     '''
     
-    ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
+    #ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
     # Insert month headers and week date ranges
-    week_dates = get_week_dates(start_week, len(df.columns) - start_col_index, year)
-    week_years = sorted(set(date_info[1] for date_info in week_dates))
+    
+    week_dates = get_week_dates(start_week, len(chronogram[0]), year)
 
-    # Handle year or years in the header
-    year_cell = ws.cell(row=1, column=start_col_index)
-    if len(week_years) > 1:
-        year_cell.value = f"{week_years[0]}-{week_years[-1]}"
-    else:
-        year_cell.value = str(week_years[0])
-    year_cell.alignment = Alignment(horizontal='center', vertical='center')
-    year_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-    year_cell.font = Font(color="FFFFFF", bold=True)
+    current_year = week_dates[0][1]
+    year_start_col = start_col_index
 
-    for i, date_info in enumerate(week_dates, start=start_col_index):
-        date_range, year = date_info  # Unpack inside the loop body to avoid errors
-        # Now use date_range and year as needed
+    for i, (date_range, year_of_week) in enumerate(week_dates, start=start_col_index):
+        if current_year != year_of_week:
+            # Merge cells for the current year
+            ws.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=i - 1)
+            # Immediately access the top-left cell of the merged range to set the value
+            primary_cell = ws.cell(row=1, column=year_start_col)
+            primary_cell.value = str(current_year)
+            primary_cell.alignment = Alignment(horizontal='left', vertical='center')
+            primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            primary_cell.font = Font(color="FFFFFF", bold=True)
+
+            # Update the start column for the new year
+            current_year = year_of_week
+            year_start_col = i
+
+    # Merge and set the last year header
+    ws.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=len(week_dates) + start_col_index - 1)
+    primary_cell = ws.cell(row=1, column=year_start_col)
+    primary_cell.value = str(current_year)
+    primary_cell.alignment = Alignment(horizontal='left', vertical='center')
+    primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+    primary_cell.font = Font(color="FFFFFF", bold=True)
+
 
 
     row_offset = 2  # This is where the headers will start in the Excel sheet
@@ -342,7 +355,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
                 task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
 
     # Set column widths for the data starting from column F
-    column_width = 18
+    column_width = 20
     for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
         for cell in col:
             ws.column_dimensions[get_column_letter(cell.column)].width = column_width
