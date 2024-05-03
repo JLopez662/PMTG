@@ -415,6 +415,8 @@ while start_week and not validate_date(start_week):
 
 # Ask user for input (hours as separated values by comma)
 taskHoursInput = input("Add tasks hours (as comma-separated values): ")
+while not taskHoursInput:
+    taskHoursInput = input("Add at least one task hour or more (as comma-separated values): ")
 tasks = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
 # Ask user for input (activity names as comma-separated values, or leave empty)
