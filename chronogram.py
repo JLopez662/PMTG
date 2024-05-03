@@ -54,28 +54,25 @@ def validate_date(date_text):
 def get_week_dates(start_date, num_weeks, year):
     week_dates = []
     start_date_obj = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")
-
     current_date = start_date_obj
 
-    for _ in range(num_weeks+2):
-        end_date = current_date + timedelta(days=6)  # Calculate the end of the week
+    for _ in range(num_weeks + 2):  # Ensuring enough weeks are calculated
+        end_date = current_date + timedelta(days=6)  # End of the week calculation
 
-        # Handle leap years and February
-        if current_date.month == 2:  # February special case
-            if calendar.isleap(current_date.year):  # Leap year
-                if end_date.month == 2 and end_date.day == 29:
-                    end_date = datetime(current_date.year, 2, 29)  # Correct to end of February in leap years
-                elif end_date.month == 3 and end_date.day == 1:
-                    end_date = datetime(current_date.year, 2, 29)  # Adjust the end for leap year
-            else:  # Non-leap year
-                if end_date.month == 2 and end_date.day > 28:
-                    end_date = datetime(current_date.year, 2, 28)  # Cap to 28th if month exceeds
-                elif end_date.month == 3 and end_date.day == 1:
-                    end_date = datetime(current_date.year, 2, 28)  # Adjust the end for non-leap year
+        if current_date.year != end_date.year:  # Handling the year transition
+            # Append the last week of the current year
+            week_dates.append((f"{current_date.strftime('%d/%b')} - 31/Dec", current_date.year))
+            # Adjust for the start of the new year
+            current_date = datetime(end_date.year, 1, 1)
+            end_date = current_date + timedelta(days=6)
+            # Append the first week of the new year
+            week_dates.append((f"01/Jan - {end_date.strftime('%d/%b')}", end_date.year))
+        else:
+            # Normal week addition
+            week_dates.append((f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}", current_date.year))
 
-        week_dates.append((f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}", current_date.year))
-
-        current_date = end_date + timedelta(days=1)  # Move to the next week
+        # Prepare for the next iteration
+        current_date = end_date + timedelta(days=1)
 
     return week_dates
 
@@ -170,9 +167,15 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
     # Write DataFrame to Excel file without the index and header
     df.to_excel(filename, index=False, header=False)
 
-    # If year is not provided, use the current year
+    # If year is not provided, obtain the year from the calculated week dates
     if not year:
-        year = datetime.now().year
+        # Extract the year from the week dates
+        week_years = set([date_info[1] for date_info in week_dates])
+        if len(week_years) == 1:
+            year = week_years.pop()  # Use the single year if all week dates belong to the same year
+        else:
+            # Choose the minimum year present in the week dates
+            year = min(week_years)
 
     # Open Excel file and color cells
     wb = Workbook()
@@ -183,14 +186,28 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
     ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
 
     # Set the value for the year header and apply styles
+    '''
     year_cell = ws.cell(row=1, column=start_col_index)
     year_cell.value = str(year)
     year_cell.alignment = Alignment(horizontal='center', vertical='center')
     year_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
     year_cell.font = Font(color="FFFFFF", bold=True)
-
+    '''
+    
+    ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
     # Insert month headers and week date ranges
     week_dates = get_week_dates(start_week, len(df.columns) - start_col_index, year)
+    week_years = sorted(set(date_info[1] for date_info in week_dates))
+
+    # Handle year or years in the header
+    year_cell = ws.cell(row=1, column=start_col_index)
+    if len(week_years) > 1:
+        year_cell.value = f"{week_years[0]}-{week_years[-1]}"
+    else:
+        year_cell.value = str(week_years[0])
+    year_cell.alignment = Alignment(horizontal='center', vertical='center')
+    year_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+    year_cell.font = Font(color="FFFFFF", bold=True)
 
     for i, date_info in enumerate(week_dates, start=start_col_index):
         date_range, year = date_info  # Unpack inside the loop body to avoid errors
