@@ -156,7 +156,7 @@ def adjust_column_settings(ws):
             cell.alignment = Alignment(wrap_text=True)
 
 
-def chronogramToExcel(chronogram, year, start_week, activity_names, filename="chronogram.xlsx"):
+def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, filename="chronogram.xlsx"):
     # Start from column F (which is index 5 in zero-indexed systems)
     start_col_index = 6
 
@@ -186,18 +186,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
 
     # Merge cells for the year header starting from column F
     last_data_column = len(df.columns) + 1
-    #ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
 
-    # Set the value for the year header and apply styles
-    '''
-    year_cell = ws.cell(row=1, column=start_col_index)
-    year_cell.value = str(year)
-    year_cell.alignment = Alignment(horizontal='center', vertical='center')
-    year_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-    year_cell.font = Font(color="FFFFFF", bold=True)
-    '''
-    
-    #ws.merge_cells(start_row=1, start_column=start_col_index, end_row=1, end_column=last_data_column)
     # Insert month headers and week date ranges
     
     week_dates = get_week_dates(start_week, len(chronogram[0]), year)
@@ -262,14 +251,18 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
     task_header_cell.font = Font(color="FFFFFF", bold=True)
     task_header_cell.value = "Tasks"  # Even though this sets B1, it visually appears in B3 due to the merged cells
 
+
     # Add the task numbers in column B, starting from the row where the yellow 'X' begins
     row_offset_for_tasks = 4  # assuming the yellow 'X' begins at row 4
+
+    
+    '''
     for task_num, task_row in enumerate(chronogram, start=1):
-        task_start_row = row_offset_for_tasks + task_num - 1
+        task_start_row = row_offset_for_tasks + task_num
         task_cell = ws.cell(row=task_start_row, column=2)  # Start from the adjusted offset row
         #task_cell.value = f'Task {task_num}'
-        task_cell.value = task_num
-
+        #task_cell.value = task_num
+    '''
     # Determine the actual number of weeks with tasks (plus the extra week)
     actual_weeks_with_tasks = len(df.columns) - start_col_index + 1
     
@@ -352,21 +345,38 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
         month_cell.font = Font(color="FFFFFF")
 
     # Adjust row_offset for tasks below the week headers
-    row_offset += 2
+    row_offset += 2 if not milestoneNames else +3
 
-    # Add tasks to the Excel sheet
-    for index, row in enumerate(chronogram, start=row_offset):
+    # Apply the task numbers and activity names with spacing for milestones
+    row_offset = 4
+    task_counter = 1
+    activity_index = 0
+    milestone_index = 0
+
+    # Process tasks and milestones
+    for index, row in enumerate(chronogram):
+        if set(row) == {''} and milestone_index < len(milestoneNames) - 1:
+            milestone_index += 1
+            continue
+        
+        ws.cell(row=index + row_offset, column=2, value=f'Task {task_counter}')
+        task_counter += 1
+
+        if activity_index < len(activity_names):
+            ws.cell(row=index + row_offset, column=3, value=activity_names[activity_index])
+            activity_index += 1
+
         for col_index, value in enumerate(row, start=start_col_index):
-            task_cell = ws.cell(row=index, column=col_index)
+            task_cell = ws.cell(row=index + row_offset, column=col_index)
             if value == 'X':
                 task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
-
+            
     # Set column widths for the data starting from column F
     column_width = 20
     for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
         for cell in col:
             ws.column_dimensions[get_column_letter(cell.column)].width = column_width
-    
+     
     # Create and style "Activity" header in column C
     ws.merge_cells(start_row=1, start_column=3, end_row=3, end_column=3)
     activity_header_cell = ws.cell(row=1, column=3)
@@ -374,12 +384,17 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, filename="ch
     activity_header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
     activity_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
     activity_header_cell.font = Font(color="FFFFFF", bold=True)
-    
+
+    #if milestoneNames:
+        # Add the activity names to column C, starting from the 4th row to match the task rows
+        #for index, milestone in enumerate(milestoneNames, start=4):
+            #ws.cell(row=index, column=3, value=milestone)
+    ''' 
     if activity_names:
         # Add the activity names to column C, starting from the 4th row to match the task rows
-        for index, activity_name in enumerate(activity_names, start=4):
+        for index, activity_name in enumerate(activity_names, start=5):
             ws.cell(row=index, column=3, value=activity_name)
-
+    ''' 
     # Create and style "Start Date" and "End Date" headers
     ws.merge_cells(start_row=1, start_column=4, end_row=3, end_column=4)  # Merge cells for "Start Date"
     ws.merge_cells(start_row=1, start_column=5, end_row=3, end_column=5)  # Merge cells for "End Date"
@@ -414,26 +429,69 @@ start_week = input("Add the starting week (MM/DD) (leave empty if not): ").strip
 while start_week and not validate_date(start_week):
     start_week = input("The format is incorrect. Please use MM/DD format or leave empty: ").strip()
 
+'''
+
 # Ask user for input (hours as separated values by comma)
 taskHoursInput = input("Add tasks hours (as comma-separated values): ")
 while not taskHoursInput:
     taskHoursInput = input("Add at least one task hour or more (as comma-separated values): ")
 tasks = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
+#Ask user for input (Milestone names as comma-separated values, or lesve empty)
+milestonesInput = input("Enter the list of milestones (as comma-separated values, or leave empty): ")
+milestoneNames = [milestone.strip() for milestone in milestonesInput.split(',')]
+
+
 # Ask user for input (activity names as comma-separated values, or leave empty)
 activityNamesInput = input("Add the activities (as comma-separated values, or leave empty): ")
-activity_names = [x.strip() for x in activityNamesInput.split(',') if x.strip()]  # Split only on comma
+activityNames = [activity.strip() for activity in activityNamesInput.split(',') if activity.strip()]  # Split only on comma
 
 
 # Generate the chronogram from user input
 chronogram = allocateTasksToWeeks(tasks)
 
 # Call the function to save the chronogram to an Excel file
-chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activity_names, "chronogram.xlsx")
+chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, "chronogram.xlsx")
 
+'''
 
+milestoneNames = []
+milestonesInput = input("Enter the list of milestones (as comma-separated values), or leave empty: ")
+if milestonesInput:
+    milestoneNames = [milestone.strip() for milestone in milestonesInput.split(',')]
 
+activityNames = []
+chronogram = []
 
+for index, milestone in enumerate(milestoneNames):
+    print(f"Adding tasks for Milestone: {milestone}")
+
+    tasksInput = input(f"Enter the list of tasks for {milestone} (as comma-separated values): ")
+    while not tasksInput:
+        tasksInput = input(f"Add at least one task for {milestone} (as comma-separated values): ")
+
+    tasks = [task.strip() for task in tasksInput.split(',')]
+    while not all(tasks):
+        print("Task names can't be empty. Please enter valid task names.")
+        tasksInput = input(f"Enter the list of tasks for {milestone} (as comma-separated values): ")
+        tasks = [task.strip() for task in tasksInput.split(',')]
+
+    taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values): ")
+    while not taskHoursInput:
+        taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values): ")
+    hours = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
+
+    milestoneActivityNames = [f"{milestone} - {task}" for task in tasks]
+    activityNames.extend(milestoneActivityNames)
+    milestoneChronogram = allocateTasksToWeeks(hours)
+    
+    chronogram.extend(milestoneChronogram)
+    # Add an empty row after each milestone except the last one
+    if index < len(milestoneNames) - 1:
+        chronogram.append([''] * len(milestoneChronogram[0]))  # assuming each row has the same length
+
+# Call the function to save the chronogram to an Excel file
+chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, "chronogram.xlsx")
 
         
 
