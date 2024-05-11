@@ -67,32 +67,33 @@ def add_task_dates(chronogram, start_date, ws, year):
     if not start_date:
         return  # If no start_date is provided, we cannot calculate task dates.
 
-    # Convert start_date string to a datetime object, including the year.
-    start_date_with_year = f"{start_date}/{year}"
-    current_start_date = datetime.strptime(start_date_with_year, "%m/%d/%Y")
-
     # Get week dates to match with the 'X' marks in the chronogram.
     week_dates = get_week_dates(start_date, len(chronogram[0]), year)
 
-    for index, task_row in enumerate(chronogram, start=1):
-        # Find the indices of the 'X's in the task row to determine start and end dates.
+    # Initialize the last_end_date to None, to be set by the first task's end date
+    last_end_date = None
+
+    for index, task_row in enumerate(chronogram):
         x_indices = [i for i, x in enumerate(task_row) if x == 'X']
         if x_indices:
-            # Get the week date range for the first and last 'X'.
-            start_week_range = week_dates[x_indices[0]].split(' - ')[0]
-            end_week_range = week_dates[x_indices[-1]].split(' - ')[1]
+            # Extract start and end week ranges from the week_dates list using x_indices
+            start_week_range, _ = week_dates[x_indices[0]]
+            end_week_range, _ = week_dates[x_indices[-1]]
 
-            # Convert week range strings to datetime objects.
-            task_start_date = datetime.strptime(f"{start_week_range}/{year}", "%d/%b/%Y")
-            task_end_date = datetime.strptime(f"{end_week_range}/{year}", "%d/%b/%Y")
+            # Convert date range strings to datetime objects
+            start_week_date = datetime.strptime(f"{start_week_range.split(' - ')[0]}/{year}", "%d/%b/%Y")
+            end_week_date = datetime.strptime(f"{end_week_range.split(' - ')[1]}/{year}", "%d/%b/%Y")
 
-            # Use the actual start_date as the task's start date if it's the first task.
-            if index == 1:
-                task_start_date = max(task_start_date, current_start_date)
+            # Adjust start date to be the next day after the last task's end date if applicable
+            if last_end_date and last_end_date >= start_week_date:
+                start_week_date = last_end_date + timedelta(days=1)
 
-            # Set the start and end date cells.
-            ws.cell(row=index+3, column=4, value=task_start_date.strftime("%m/%d"))
-            ws.cell(row=index+3, column=5, value=task_end_date.strftime("%m/%d"))
+            # Write the adjusted start and end dates to the worksheet
+            ws.cell(row=index + 4, column=4).value = start_week_date.strftime("%m/%d")
+            ws.cell(row=index + 4, column=5).value = end_week_date.strftime("%m/%d")
+
+            # Update the last_end_date for the next iteration
+            last_end_date = end_week_date
 
 # Function to adjust column widths and text wrapping in your Excel file
 def adjust_column_settings(ws):

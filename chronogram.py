@@ -1,49 +1,123 @@
 import pandas as pd
 import re
-import calendar
 from datetime import timedelta, datetime
 from openpyxl import Workbook
-from openpyxl.styles import Font, Color, PatternFill, Alignment
+from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
-from openpyxl.utils.dataframe import dataframe_to_rows
 
+def allocateTasksToWeeks(milestones_tasks):
+    """
+    Allocate tasks to weeks based on the provided milestones and tasks.
 
-def allocateTasksToWeeks(tasks):
-    colWeekHours = [40] #first column, representing a work week, or 40 hours
-    chronogram = [] 
+    Args:
+    - milestones_tasks (list of tuples): List of tuples containing milestone name and its tasks.
 
-    for task in tasks:
-        weeks = len(colWeekHours)
-        taskRow = ['_'] * weeks #current row times the weeks needed 
-        while task > 0: #While the task has hours left to assing
-            for i in range(len(colWeekHours)):
-                if task <= colWeekHours[i]: #task needs less hours than available in current work week
-                    colWeekHours[i] -= task
-                    taskRow[i] = 'X'
-                    task = 0 #Task hours fully allocated
-                    break
-                else:        #Task needs more hours than available in current work week
-                    if colWeekHours[i] > 0:
-                        task -= colWeekHours[i]
+    Returns:
+    - list: Chronogram list with allocated tasks.
+    """
+    chronogram = []
+
+    for milestone_name, tasks in milestones_tasks:
+        colWeekHours = [40]  # First column, representing a work week, or 40 hours
+        milestone_rows = []
+
+        for task in tasks:
+            weeks = len(colWeekHours)
+            taskRow = ['_'] * weeks  # Current row times the weeks needed
+            while task > 0:  # While the task has hours left to assign
+                for i in range(len(colWeekHours)):
+                    if task <= colWeekHours[i]:  # Task needs fewer hours than available in current work week
+                        colWeekHours[i] -= task
                         taskRow[i] = 'X'
-                        colWeekHours[i] = 0
+                        task = 0  # Task hours fully allocated
+                        break
+                    else:  # Task needs more hours than available in current work week
+                        if colWeekHours[i] > 0:
+                            task -= colWeekHours[i]
+                            taskRow[i] = 'X'
+                            colWeekHours[i] = 0
 
-            #If task still has hours left not allocated, add new week
-            if task > 0:   
-                colWeekHours.append(40)
-                taskRow.append('_')    #Extend task row for the new week
+                # If task still has hours left not allocated, add new week
+                if task > 0:
+                    colWeekHours.append(40)
+                    taskRow.append('_')  # Extend task row for the new week
 
-        #Update chronogram with next task
-        chronogram.append(taskRow) 
+            milestone_rows.append(taskRow)
 
-         #Add weeks not used by tasks 
-        for row in chronogram: 
-            while len(row) < len(taskRow):
-                row.append('_')
+        # Add milestone rows to the chronogram
+        chronogram.extend(milestone_rows)
+        # Add an empty row after each milestone except the last one
+        chronogram.append([''] * len(colWeekHours))
 
-    return chronogram
+    return chronogram[:-1]  # Remove the final empty row
 
-# Function to validate the date format MM/DD
+
+# Global storage for all week dates
+all_week_dates = []
+
+def accumulate_week_dates(week_dates):
+    """
+    Appends new week dates to the global list of all week dates.
+
+    Args:
+    - week_dates (list of tuples): Week dates to be added.
+    """
+    global all_week_dates
+    all_week_dates.extend(week_dates)
+
+def get_all_week_dates():
+    """
+    Returns all accumulated week dates.
+
+    Returns:
+    - list: A list of all week dates.
+    """
+    global all_week_dates
+    return all_week_dates
+
+current_milestone = None
+last_milestone_end_date = None
+milestone_start_date = None  # This will keep track of the start date for the current milestone
+
+def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_dates=None):
+    global last_milestone_end_date, current_milestone, milestone_start_date
+
+    week_dates = []
+    start_dates = []
+
+    if last_milestone_end_date is not None and milestone_name != current_milestone:
+        new_start_date = last_milestone_end_date + timedelta(days=1)
+        start_dates = [new_start_date]
+        milestone_start_date = new_start_date
+    elif milestone_name == current_milestone and milestone_start_date:
+        start_dates = [milestone_start_date]
+    elif last_end_dates is not None:
+        start_dates = [last_end_date + timedelta(days=1) for last_end_date in last_end_dates]
+    if not start_dates:
+        start_dates = [datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")]
+        milestone_start_date = start_dates[0]
+
+    current_dates = start_dates
+
+    for i in range(num_weeks):
+        end_dates = [current_date + timedelta(days=6) for current_date in current_dates]
+        week_ranges = [f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}" for current_date, end_date in zip(current_dates, end_dates)]
+        week_dates.extend(zip(week_ranges, [current_date.year for current_date in current_dates]))
+        current_dates = [end_date + timedelta(days=1) for end_date in end_dates]
+
+    if milestone_name:
+        last_milestone_end_date = end_dates[-1] if end_dates else None
+    current_milestone = milestone_name
+
+    # Accumulate week dates for all milestones
+    accumulate_week_dates(week_dates)
+
+    print("Returning week_dates:", week_dates)
+    return week_dates
+
+
+
+
 def validate_date(date_text):
     try:
         datetime.strptime(date_text, '%m/%d')
@@ -51,95 +125,84 @@ def validate_date(date_text):
     except ValueError:
         return False
     
-# Function to calculate date ranges for each week, spanning 7 days each
-def get_week_dates(start_date, num_weeks, year):
-    
+
+
+def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping, task_milestone_mapping, row_offset=4):
     if not start_date:
-    # Return generic week labels when no start date is provided
-        return [(f"Week {i+1}", year) for i in range(num_weeks + 1)]
-
-    week_dates = []
-    start_date_obj = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")
-    current_date = start_date_obj
-
-    for _ in range(num_weeks + 1):  # Ensuring enough weeks are calculated
-        end_date = current_date + timedelta(days=6)  # End of the week calculation
-
-        if current_date.year != end_date.year:  # Handling the year transition
-            # Append the last week of the current year
-            week_dates.append((f"{current_date.strftime('%d/%b')} - 31/Dec", current_date.year))
-            # Adjust for the start of the new year
-            current_date = datetime(end_date.year, 1, 1)
-            end_date = current_date + timedelta(days=6)
-            # Append the first week of the new year
-            week_dates.append((f"01/Jan - {end_date.strftime('%d/%b')}", end_date.year))
-        else:
-            # Normal week addition
-            week_dates.append((f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}", current_date.year))
-
-        # Prepare for the next iteration
-        current_date = end_date + timedelta(days=1)
-
-    return week_dates
-
-
-# Check and correct any date discrepancies to prevent errors
-# Function to check and correct for leap year issues
-def validate_week_date(date_text):
-    try:
-        date_obj = datetime.strptime(date_text, "%d/%b")
-        
-        if date_obj.month == 2 and date_obj.day == 29:
-            # Adjust for leap year by moving leap day to March 1st
-            if calendar.isleap(date_obj.year):
-                date_obj = date_obj.replace(day=29)  # Leap year maintains Feb 29th
-            else:
-                date_obj = date_obj.replace(day=1, month=3)  # Non-leap year moves to March 1st
-        elif date_obj.month == 2 and date_obj.day == 28:
-            # Adjust for leap year by moving to March 1st in non-leap years
-            if calendar.isleap(date_obj.year):
-                date_obj = date_obj.replace(day=28)  # Leap year maintains Feb 28th
-            else:
-                date_obj = date_obj.replace(day=1, month=3)  # Non-leap year moves to March 1st
-        return date_obj.strftime("%d/%b")
-    except ValueError:
         return None
 
+    current_milestone = None
 
-def add_task_dates(chronogram, start_date, ws, year):
-    if not start_date:
-        return  # If no start_date is provided, we cannot calculate task dates.
+    def get_next_available_date(date, used_dates):
+        while date in used_dates:
+            date += timedelta(days=7)
+        return date
 
-    # Convert start_date string to a datetime object, including the year.
-    start_date_with_year = f"{start_date}/{year}"
-    current_start_date = datetime.strptime(start_date_with_year, "%m/%d/%Y")
+    used_start_dates = []
+    used_end_dates = []
 
-    # Get week dates to match with the 'X' marks in the chronogram.
-    week_dates = get_week_dates(start_date, len(chronogram[0]), year)
+    print("From add_task_dates", end='\n')
 
-    for index, task_row in enumerate(chronogram, start=1):
+    for index, task_row in enumerate(chronogram):
+        # Check if the row is empty
+        if set(task_row) == {''}:
+            print(f"Skipping empty row {index + 1}")
+            continue
+
+        milestone_name = task_milestone_mapping[index]
+        if current_milestone != milestone_name:
+            current_milestone = milestone_name
+            print(f"\nProcessing tasks for Milestone: {current_milestone}")
+
+        num_weeks = len(task_row)
+        week_dates = get_week_dates(start_date, num_weeks, year, milestone_name)
+
         x_indices = [i for i, x in enumerate(task_row) if x == 'X']
-        if x_indices:
-            # Correctly extract date range from tuple
+        if x_indices and len(week_dates) > x_indices[0]:
             start_week_range, _ = week_dates[x_indices[0]]
             end_week_range, _ = week_dates[x_indices[-1]]
             start_week_range = start_week_range.split(' - ')[0]
             end_week_range = end_week_range.split(' - ')[1]
 
-            # Convert week range strings to datetime objects
             task_start_date = datetime.strptime(f"{start_week_range}/{year}", "%d/%b/%Y")
             task_end_date = datetime.strptime(f"{end_week_range}/{year}", "%d/%b/%Y")
 
-            if index == 1:
-                task_start_date = max(task_start_date, current_start_date)
+            task_start_date = get_next_available_date(task_start_date, used_start_dates)
+            duration_days = (task_end_date - task_start_date).days
+            task_end_date = task_start_date + timedelta(days=duration_days)
+            task_end_date = get_next_available_date(task_end_date, used_end_dates)
 
-            ws.cell(row=index+3, column=4, value=task_start_date.strftime("%m/%d"))
-            ws.cell(row=index+3, column=5, value=task_end_date.strftime("%m/%d"))
+            used_start_dates.append(task_start_date)
+            used_end_dates.append(task_end_date)
+
+            ws.cell(row=task_row_mapping[index], column=4, value=task_start_date.strftime("%m/%d"))
+            ws.cell(row=task_row_mapping[index], column=5, value=task_end_date.strftime("%m/%d"))
+
+            # Fill in the appropriate columns with orange cells
+            for i, (date_range, _) in enumerate(week_dates, start=6):
+                start_week_str, end_week_str = date_range.split(' - ')
+                start_week = datetime.strptime(f"{start_week_str}/{year}", "%d/%b/%Y")
+                end_week = datetime.strptime(f"{end_week_str}/{year}", "%d/%b/%Y")
+
+                if task_start_date <= end_week and task_end_date >= start_week:
+                    task_cell = ws.cell(row=task_row_mapping[index], column=i)
+                    task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+        else:
+            print(f"Skipping row {index + 1} as it contains no tasks or insufficient weeks.")
+
+    return None
 
 
-# Function to adjust column widths and text wrapping in your Excel file
+
+def calculate_total_weeks(chronogram):
+    """
+    Calculate the total number of weeks required based on the chronogram data.
+    """
+    max_length = max(len(row) for row in chronogram if set(row) != {''})
+    return max_length
+
+
 def adjust_column_settings(ws):
-    # Set wider column widths for specific columns
     column_widths = {
         'B': 5,  # Tasks column
         'C': 30,  # Activity column
@@ -150,66 +213,65 @@ def adjust_column_settings(ws):
     for col, width in column_widths.items():
         ws.column_dimensions[col].width = width
 
-    # Enable text wrapping
     for row in ws.iter_rows(min_row=4, max_row=ws.max_row, min_col=2, max_col=3):
         for cell in row:
             cell.alignment = Alignment(wrap_text=True)
 
 
-def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, filename="chronogram.xlsx"):
-    # Start from column F (which is index 5 in zero-indexed systems)
-    start_col_index = 6
 
-    # Create DataFrame from chronogram
+def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, filename="chronogram.xlsx"):
+    start_col_index = 6
+    num_weeks = calculate_total_weeks(chronogram)
+
     df = pd.DataFrame(chronogram)
 
-    # Insert empty columns at the beginning to shift the data to start from column F
-    for col in range(start_col_index - 1):  # -1 because the DataFrame already starts with index 1
+    for col in range(start_col_index - 1):
         df.insert(col, 'Empty{}'.format(col), [''] * df.shape[0])
-
-    # Write DataFrame to Excel file without the index and header
     df.to_excel(filename, index=False, header=False)
 
-    # If year is not provided, obtain the year from the calculated week dates
     if not year:
-        # Extract the year from the week dates
         week_years = set([date_info[1] for date_info in week_dates])
         if len(week_years) == 1:
-            year = week_years.pop()  # Use the single year if all week dates belong to the same year
+            year = week_years.pop()
         else:
-            # Choose the minimum year present in the week dates
             year = min(week_years)
 
-    # Open Excel file and color cells
     wb = Workbook()
-    ws = wb.active  # Get the active sheet
-
-    # Merge cells for the year header starting from column F
-    last_data_column = len(df.columns) + 1
-
-    # Insert month headers and week date ranges
+    ws = wb.active
     
-    week_dates = get_week_dates(start_week, len(chronogram[0]), year)
 
+    ###########################Headers area
+
+    week_dates = get_week_dates(start_week, num_weeks, year)
+    
+
+    # Assuming week_dates = get_week_dates(start_week, num_weeks, year) has already been defined
+
+    # Printing week_dates
+    print("Week Dates from get_week_dates:", week_dates)
+    print("")
+ 
+
+    all_dates = get_all_week_dates()
+    print("All week dates for headers:", all_dates)
+
+    # Year Header
     current_year = week_dates[0][1]
     year_start_col = start_col_index
+    
 
     for i, (date_range, year_of_week) in enumerate(week_dates, start=start_col_index):
         if current_year != year_of_week:
-            # Merge cells for the current year
             ws.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=i - 1)
-            # Immediately access the top-left cell of the merged range to set the value
             primary_cell = ws.cell(row=1, column=year_start_col)
             primary_cell.value = str(current_year)
             primary_cell.alignment = Alignment(horizontal='left', vertical='center')
             primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
             primary_cell.font = Font(color="FFFFFF", bold=True)
 
-            # Update the start column for the new year
             current_year = year_of_week
             year_start_col = i
 
-    # Merge and set the last year header
     ws.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=len(week_dates) + start_col_index - 1)
     primary_cell = ws.cell(row=1, column=year_start_col)
     primary_cell.value = str(current_year)
@@ -217,167 +279,46 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
     primary_cell.font = Font(color="FFFFFF", bold=True)
 
+    ###########################
 
-
-    row_offset = 2  # This is where the headers will start in the Excel sheet
+    row_offset = 2
     months = {}
 
-
-    # Validate all date strings before proceeding to ensure accuracy
-    for date_range, _ in week_dates:
-        if start_week:
-            start_str, end_str = date_range.split(' - ')
-            print("Start date string:", start_str)
-            print("End date string:", end_str)
-
-            # Check and correct any date discrepancies to prevent errors
-            try:
-                start_date = datetime.strptime(start_str, "%d/%b")
-                end_date = datetime.strptime(end_str, "%d/%b")
-                if start_date.month != end_date.month:
-                    raise ValueError("Date range spans multiple months.")
-            except ValueError as e:
-                print("Error parsing start date:", e)
-                # Handle the exception gracefully and ensure correct date parsing
-
-    
-
-    # Merge cells for the "Task" header from B1 to B3
-    ws.merge_cells(start_row=1, start_column=2, end_row=3, end_column=2)
-    # Apply styles and set the value for the "Task" header in the top-left cell of the merged area
-    task_header_cell = ws.cell(row=1, column=2)
-    task_header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
-    task_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-    task_header_cell.font = Font(color="FFFFFF", bold=True)
-    task_header_cell.value = "Tasks"  # Even though this sets B1, it visually appears in B3 due to the merged cells
-
-
-    # Add the task numbers in column B, starting from the row where the yellow 'X' begins
-    row_offset_for_tasks = 4  # assuming the yellow 'X' begins at row 4
-
-    
-    '''
-    for task_num, task_row in enumerate(chronogram, start=1):
-        task_start_row = row_offset_for_tasks + task_num
-        task_cell = ws.cell(row=task_start_row, column=2)  # Start from the adjusted offset row
-        #task_cell.value = f'Task {task_num}'
-        #task_cell.value = task_num
-    '''
-    # Determine the actual number of weeks with tasks (plus the extra week)
-    actual_weeks_with_tasks = len(df.columns) - start_col_index + 1
-    
-    # Assign month headers and week headers starting from column F
-    # Update the section where the start date is parsed and used for month name handling
     for i, (date_range, year) in enumerate(week_dates, start=start_col_index):
-        if start_week:
-            # Extract the start date from the date_range string for month name handling
-            start_date_str, _ = date_range.split(' - ')
-            start_date_str = validate_week_date(start_date_str)
-            if start_date_str:
-                try:
-                    start_date = datetime.strptime(start_date_str, "%d/%b")
-                    month_name = start_date.strftime("%B")
-                except ValueError as e:
-                    month_name = "Unknown Month"
-            if month_name not in months:
-                months[month_name] = {'start': i, 'end': i}
-            else:
-                months[month_name]['end'] = i
+        start_date_str, _ = date_range.split(' - ')
+        try:
+            start_date = datetime.strptime(start_date_str, "%d/%b")
+            month_name = start_date.strftime("%B")
+        except ValueError:
+            month_name = "Unknown Month"
+
+        if month_name not in months:
+            months[month_name] = {'start': i, 'end': i}
         else:
-            # If no starting week provided, label the "months" as Month 1, Month 2, etc.
-            week_index = i - start_col_index  # Determine the week number
-            month_num = (week_index // 4) + 1  # Month number based on 4 weeks per month
-            month_name = f'Month {month_num}'
+            months[month_name]['end'] = i
 
-            if month_name not in months:
-                months[month_name] = {'start': i, 'end': i}
-
-            if i < actual_weeks_with_tasks:
-                months[month_name]['end'] = i
-
-
-        # Set week headers using the date_range from the tuple
         week_cell = ws.cell(row=row_offset + 1, column=i)
         week_cell.value = date_range
         week_cell.alignment = Alignment(horizontal='center')
         week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         week_cell.font = Font(color="FFFFFF")
 
+    for month_name, month_range in months.items():
+        if month_range['start'] <= month_range['end']:
+            ws.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
+            month_cell = ws.cell(row=row_offset, column=month_range['start'])
+            month_cell.value = month_name
+            month_cell.alignment = Alignment(horizontal='center')
+            month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            month_cell.font = Font(color="FFFFFF")
 
-    # Now, outside the loop, adjust month end values, merge cells, and fill for "monthly" headers if no start_week provided
-    if not start_week:
-        # First, adjust the end of each month to match the last week with a task or the end of the 4-week block
-        for month_name, month_range in months.items():
-            month_end_week = month_range['start'] + 3  # Default month span of 4 weeks
-            if month_end_week >= actual_weeks_with_tasks + start_col_index - 1:
-                month_end_week = actual_weeks_with_tasks + start_col_index
-            if month_end_week < month_range['start']:
-                month_end_week = month_range['start']  # Ensure the end week does not precede the start week
-            months[month_name]['end'] = month_end_week
+    ws.merge_cells(start_row=1, start_column=2, end_row=3, end_column=2)
+    task_header_cell = ws.cell(row=1, column=2)
+    task_header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
+    task_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+    task_header_cell.font = Font(color="FFFFFF", bold=True)
+    task_header_cell.value = "Tasks"
 
-
-        # Merge and fill cells for each month
-        for month_name, month_range in months.items():
-            # Only merge if start is less than or equal to end to avoid ValueError in merging
-            if month_range['start'] <= month_range['end']:
-                ws.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
-                month_cell = ws.cell(row=row_offset, column=month_range['start'])
-                month_cell.value = month_name
-                month_cell.alignment = Alignment(horizontal='center')
-                month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-                month_cell.font = Font(color="FFFFFF")
-
-
-    # Ensure accurate month headers are displayed without errors in the Excel sheet
-    for month, cols in sorted(months.items()):
-        # Get the column range for the month
-        start_col = get_column_letter(cols['start'])
-        end_col = get_column_letter(cols['end'])
-
-        # Merge cells for the month header
-        ws.merge_cells(start_row=row_offset, start_column=cols['start'], end_row=row_offset, end_column=cols['end'])
-        
-        # Set the month header in the first cell of the merged range
-        month_cell = ws[start_col + str(row_offset)]
-        month_cell.value = month
-        month_cell.alignment = Alignment(horizontal='center')
-        month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-        month_cell.font = Font(color="FFFFFF")
-
-    # Adjust row_offset for tasks below the week headers
-    row_offset += 2 if not milestoneNames else +3
-
-    # Apply the task numbers and activity names with spacing for milestones
-    row_offset = 4
-    task_counter = 1
-    activity_index = 0
-    milestone_index = 0
-
-    # Process tasks and milestones
-    for index, row in enumerate(chronogram):
-        if set(row) == {''} and milestone_index < len(milestoneNames) - 1:
-            milestone_index += 1
-            continue
-        
-        ws.cell(row=index + row_offset, column=2, value=f'Task {task_counter}')
-        task_counter += 1
-
-        if activity_index < len(activity_names):
-            ws.cell(row=index + row_offset, column=3, value=activity_names[activity_index])
-            activity_index += 1
-
-        for col_index, value in enumerate(row, start=start_col_index):
-            task_cell = ws.cell(row=index + row_offset, column=col_index)
-            if value == 'X':
-                task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
-            
-    # Set column widths for the data starting from column F
-    column_width = 20
-    for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
-        for cell in col:
-            ws.column_dimensions[get_column_letter(cell.column)].width = column_width
-     
-    # Create and style "Activity" header in column C
     ws.merge_cells(start_row=1, start_column=3, end_row=3, end_column=3)
     activity_header_cell = ws.cell(row=1, column=3)
     activity_header_cell.value = "Activity"
@@ -385,40 +326,67 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     activity_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
     activity_header_cell.font = Font(color="FFFFFF", bold=True)
 
-    #if milestoneNames:
-        # Add the activity names to column C, starting from the 4th row to match the task rows
-        #for index, milestone in enumerate(milestoneNames, start=4):
-            #ws.cell(row=index, column=3, value=milestone)
-    ''' 
-    if activity_names:
-        # Add the activity names to column C, starting from the 4th row to match the task rows
-        for index, activity_name in enumerate(activity_names, start=5):
-            ws.cell(row=index, column=3, value=activity_name)
-    ''' 
-    # Create and style "Start Date" and "End Date" headers
-    ws.merge_cells(start_row=1, start_column=4, end_row=3, end_column=4)  # Merge cells for "Start Date"
-    ws.merge_cells(start_row=1, start_column=5, end_row=3, end_column=5)  # Merge cells for "End Date"
-        
+    ws.merge_cells(start_row=1, start_column=4, end_row=3, end_column=4)
+    ws.merge_cells(start_row=1, start_column=5, end_row=3, end_column=5)
+
     start_date_header_cell = ws.cell(row=1, column=4)
     end_date_header_cell = ws.cell(row=1, column=5)
-    
+
     start_date_header_cell.value = "Start Date"
     end_date_header_cell.value = "End Date"
-    
+
     for cell in [start_date_header_cell, end_date_header_cell]:
         cell.alignment = Alignment(horizontal='center', vertical='bottom')
         cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         cell.font = Font(color="FFFFFF", bold=True)
 
-    # Before saving the workbook, call the function to add task start dates
-    add_task_dates(chronogram, start_week, ws, year)  # Pass 'year' as well
+    row_offset += 2 if not milestoneNames else +3
 
-    # Adjust column settings before saving
+    milestone_index = 0
+    task_index = 1
+    activity_index = 0
+    task_row_mapping = {}
+    task_milestone_mapping = {}
+
+    for index, row in enumerate(chronogram):
+        if set(row) == {''}:
+            milestone_index += 1
+            task_index = 1
+            continue
+
+        task_label = f"Task {milestone_index + 1}.{task_index}"
+        task_row_mapping[index] = index + row_offset
+        task_milestone_mapping[index] = milestoneNames[milestone_index]
+        ws.cell(row=index + row_offset, column=2, value=task_label)
+        task_index += 1
+
+        if activity_index < len(activity_names):
+            ws.cell(row=index + row_offset, column=3, value=activity_names[activity_index])
+            activity_index += 1
+
+    for index, row in enumerate(chronogram):
+        if index not in task_row_mapping:
+            continue
+
+        task_excel_row = task_row_mapping[index]
+        for col_index, value in enumerate(row, start=start_col_index):
+            task_cell = ws.cell(row=task_excel_row, column=col_index)
+            if value == 'X':
+                task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+
+    column_width = 20
+    for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
+        for cell in col:
+            ws.column_dimensions[get_column_letter(cell.column)].width = column_width
+
+    add_task_dates(chronogram, start_week, ws, year, num_weeks, task_row_mapping, task_milestone_mapping)
+
     adjust_column_settings(ws)
 
-    # Save the workbook
     wb.save(filename)
-    df.to_csv("chronogram.csv", index=False)  # Also save as CSV
+    df.to_csv("chronogram.csv", index=False)
+
+
 
 # Ask user for the year for the Gantt Chart
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ").strip()
@@ -429,39 +397,13 @@ start_week = input("Add the starting week (MM/DD) (leave empty if not): ").strip
 while start_week and not validate_date(start_week):
     start_week = input("The format is incorrect. Please use MM/DD format or leave empty: ").strip()
 
-'''
-
-# Ask user for input (hours as separated values by comma)
-taskHoursInput = input("Add tasks hours (as comma-separated values): ")
-while not taskHoursInput:
-    taskHoursInput = input("Add at least one task hour or more (as comma-separated values): ")
-tasks = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
-
-#Ask user for input (Milestone names as comma-separated values, or lesve empty)
-milestonesInput = input("Enter the list of milestones (as comma-separated values, or leave empty): ")
-milestoneNames = [milestone.strip() for milestone in milestonesInput.split(',')]
-
-
-# Ask user for input (activity names as comma-separated values, or leave empty)
-activityNamesInput = input("Add the activities (as comma-separated values, or leave empty): ")
-activityNames = [activity.strip() for activity in activityNamesInput.split(',') if activity.strip()]  # Split only on comma
-
-
-# Generate the chronogram from user input
-chronogram = allocateTasksToWeeks(tasks)
-
-# Call the function to save the chronogram to an Excel file
-chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, "chronogram.xlsx")
-
-'''
-
 milestoneNames = []
 milestonesInput = input("Enter the list of milestones (as comma-separated values), or leave empty: ")
 if milestonesInput:
     milestoneNames = [milestone.strip() for milestone in milestonesInput.split(',')]
 
 activityNames = []
-chronogram = []
+milestones_tasks = []
 
 for index, milestone in enumerate(milestoneNames):
     print(f"Adding tasks for Milestone: {milestone}")
@@ -483,16 +425,10 @@ for index, milestone in enumerate(milestoneNames):
 
     milestoneActivityNames = [f"{milestone} - {task}" for task in tasks]
     activityNames.extend(milestoneActivityNames)
-    milestoneChronogram = allocateTasksToWeeks(hours)
-    
-    chronogram.extend(milestoneChronogram)
-    # Add an empty row after each milestone except the last one
-    if index < len(milestoneNames) - 1:
-        chronogram.append([''] * len(milestoneChronogram[0]))  # assuming each row has the same length
+    milestones_tasks.append((milestone, hours))
+
+# Generate the chronogram from user input
+chronogram = allocateTasksToWeeks(milestones_tasks)
 
 # Call the function to save the chronogram to an Excel file
 chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, "chronogram.xlsx")
-
-        
-
-
