@@ -55,6 +55,8 @@ def allocateTasksToWeeks(milestones_tasks):
 # Global storage for all week dates
 all_week_dates = []
 
+'''
+
 def accumulate_week_dates(week_dates):
     """
     Appends new week dates to the global list of all week dates.
@@ -64,6 +66,8 @@ def accumulate_week_dates(week_dates):
     """
     global all_week_dates
     all_week_dates.extend(week_dates)
+    print("All Week Dates: ", all_week_dates)
+    print("")
 
 def get_all_week_dates():
     """
@@ -74,46 +78,10 @@ def get_all_week_dates():
     """
     global all_week_dates
     return all_week_dates
+'''
 
-current_milestone = None
-last_milestone_end_date = None
-milestone_start_date = None  # This will keep track of the start date for the current milestone
 
-def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_dates=None):
-    global last_milestone_end_date, current_milestone, milestone_start_date
 
-    week_dates = []
-    start_dates = []
-
-    if last_milestone_end_date is not None and milestone_name != current_milestone:
-        new_start_date = last_milestone_end_date + timedelta(days=1)
-        start_dates = [new_start_date]
-        milestone_start_date = new_start_date
-    elif milestone_name == current_milestone and milestone_start_date:
-        start_dates = [milestone_start_date]
-    elif last_end_dates is not None:
-        start_dates = [last_end_date + timedelta(days=1) for last_end_date in last_end_dates]
-    if not start_dates:
-        start_dates = [datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")]
-        milestone_start_date = start_dates[0]
-
-    current_dates = start_dates
-
-    for i in range(num_weeks):
-        end_dates = [current_date + timedelta(days=6) for current_date in current_dates]
-        week_ranges = [f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}" for current_date, end_date in zip(current_dates, end_dates)]
-        week_dates.extend(zip(week_ranges, [current_date.year for current_date in current_dates]))
-        current_dates = [end_date + timedelta(days=1) for end_date in end_dates]
-
-    if milestone_name:
-        last_milestone_end_date = end_dates[-1] if end_dates else None
-    current_milestone = milestone_name
-
-    # Accumulate week dates for all milestones
-    accumulate_week_dates(week_dates)
-
-    print("Returning week_dates:", week_dates)
-    return week_dates
 
 
 
@@ -154,7 +122,8 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
             current_milestone = milestone_name
             print(f"\nProcessing tasks for Milestone: {current_milestone}")
 
-        num_weeks = len(task_row)
+        #num_weeks = len(task_row)
+        num_weeks = calculate_total_weeks(chronogram)
         week_dates = get_week_dates(start_date, num_weeks, year, milestone_name)
 
         x_indices = [i for i, x in enumerate(task_row) if x == 'X']
@@ -202,7 +171,7 @@ def calculate_total_weeks(chronogram):
     return max_length
 
 
-def adjust_column_settings(ws):
+def adjust_column_settings(ws, start_col_index, num_weeks):
     column_widths = {
         'B': 5,  # Tasks column
         'C': 30,  # Activity column
@@ -213,9 +182,74 @@ def adjust_column_settings(ws):
     for col, width in column_widths.items():
         ws.column_dimensions[col].width = width
 
+    # Set the width of the week date headers dynamically
+    week_date_col_width = 16  # Adequate width to display full date ranges
+    for i in range(num_weeks):
+        col_letter = get_column_letter(start_col_index + i)
+        ws.column_dimensions[col_letter].width = week_date_col_width
+
     for row in ws.iter_rows(min_row=4, max_row=ws.max_row, min_col=2, max_col=3):
         for cell in row:
             cell.alignment = Alignment(wrap_text=True)
+
+
+
+def process_final_week_ranges():
+    global all_week_ranges
+    print("")
+    print("Final Processing of all week dates across milestones:")
+    print("Content: ", all_week_ranges)
+    print("Data Type: ", type(all_week_ranges))
+    return all_week_ranges
+
+
+# Global variables to manage state
+current_milestone = None
+last_milestone_end_date = None
+milestone_start_date = None
+all_week_ranges = []  # This will collect all unique week ranges
+#all_week_ranges = set()  # Use set for unique entries
+milestone_count = 0
+current_milestone_count = 1
+last_activity = None
+
+def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_dates=None, is_last_task=False):
+    global last_milestone_end_date, current_milestone, milestone_start_date, all_week_ranges, current_milestone_count, milestone_count
+
+    week_dates = []
+    start_dates = []
+
+    if last_milestone_end_date is not None and milestone_name != current_milestone:
+        new_start_date = last_milestone_end_date + timedelta(days=1)
+        start_dates = [new_start_date]
+        milestone_start_date = new_start_date
+    elif milestone_name == current_milestone and milestone_start_date:
+        start_dates = [milestone_start_date]
+    elif last_end_dates is not None:
+        start_dates = [last_end_date + timedelta(days=1) for last_end_date in last_end_dates]
+    if not start_dates:
+        start_dates = [datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")]
+        milestone_start_date = start_dates[0]
+
+    current_dates = start_dates
+
+    for i in range(num_weeks):
+        end_dates = [current_date + timedelta(days=6) for current_date in current_dates]
+        current_week_ranges = [f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}" for current_date, end_date in zip(current_dates, end_dates)]
+        week_dates.extend([(week_range, current_date.year) for week_range, current_date in zip(current_week_ranges, current_dates)])
+        all_week_ranges.extend([(week_range, current_date.year) for week_range, current_date in zip(current_week_ranges, current_dates)])
+        current_dates = [end_date + timedelta(days=1) for end_date in end_dates]
+
+    if milestone_name:
+        last_milestone_end_date = end_dates[-1] if end_dates else None
+        current_milestone = milestone_name
+
+    if current_milestone_count == milestone_count and milestone_name == current_milestone:
+        process_final_week_ranges()
+
+    return week_dates
+
+
 
 
 
@@ -224,7 +258,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     num_weeks = calculate_total_weeks(chronogram)
 
     df = pd.DataFrame(chronogram)
-
     for col in range(start_col_index - 1):
         df.insert(col, 'Empty{}'.format(col), [''] * df.shape[0])
     df.to_excel(filename, index=False, header=False)
@@ -242,23 +275,82 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     ###########################Headers area
 
-    week_dates = get_week_dates(start_week, num_weeks, year)
-    
+    #week_dates = get_week_dates(start_week, num_weeks, year)
 
+    row_offset = 4 if not milestoneNames else 5
+
+    milestone_index = 0
+    task_index = 1
+    activity_index = 0
+    task_row_mapping = {}
+    task_milestone_mapping = {}
+
+    for index, row in enumerate(chronogram):
+        if set(row) == {''}:
+            milestone_index += 1
+            task_index = 1
+            continue
+
+        task_label = f"Task {milestone_index + 1}.{task_index}"
+        task_row_mapping[index] = index + row_offset
+        task_milestone_mapping[index] = milestoneNames[milestone_index]
+        ws.cell(row=index + row_offset, column=2, value=task_label)
+        task_index += 1
+
+        if activity_index < len(activity_names):
+            ws.cell(row=index + row_offset, column=3, value=activity_names[activity_index])
+            activity_index += 1
+
+    for index, row in enumerate(chronogram):
+        if index not in task_row_mapping:
+            continue
+
+        task_excel_row = task_row_mapping[index]
+        for col_index, value in enumerate(row, start=start_col_index):
+            task_cell = ws.cell(row=task_excel_row, column=col_index)
+            if value == 'X':
+                task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+
+    column_width = 20
+    for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
+        for cell in col:
+            ws.column_dimensions[get_column_letter(cell.column)].width = column_width
+
+
+    add_task_dates(chronogram, start_week, ws, year, num_weeks, task_row_mapping, task_milestone_mapping)
+
+    #week_dates = all_week_ranges
+    # Convert all_week_ranges to a set to remove duplicates, then sort it
+    week_dates = sorted(set(all_week_ranges), key=lambda x: (x[1], datetime.strptime(x[0].split(' - ')[0], '%d/%b')))
+
+    print("")
+    print("On chronogramToExcel, output of all_week_ranges: ", all_week_ranges)
+    print("Unique week dates after removing duplicates:")
+    for week_range in week_dates:
+        print(week_range)  # This prints each unique week range
+
+    #week_dates = process_final_week_ranges()
+    print("")
+    
     # Assuming week_dates = get_week_dates(start_week, num_weeks, year) has already been defined
 
     # Printing week_dates
+    print("")
     print("Week Dates from get_week_dates:", week_dates)
     print("")
  
 
-    all_dates = get_all_week_dates()
-    print("All week dates for headers:", all_dates)
+    #all_dates = get_all_week_dates()
+    #print("All week dates for headers:", all_dates)
 
     # Year Header
     current_year = week_dates[0][1]
+    #current_year = None
     year_start_col = start_col_index
     
+    print("")
+    print("Call from process final week ranges",process_final_week_ranges())
+    #week_dates = process_final_week_ranges()
 
     for i, (date_range, year_of_week) in enumerate(week_dates, start=start_col_index):
         if current_year != year_of_week:
@@ -303,6 +395,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         week_cell.font = Font(color="FFFFFF")
 
+
+
     for month_name, month_range in months.items():
         if month_range['start'] <= month_range['end']:
             ws.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
@@ -311,6 +405,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             month_cell.alignment = Alignment(horizontal='center')
             month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
             month_cell.font = Font(color="FFFFFF")
+
+
 
     ws.merge_cells(start_row=1, start_column=2, end_row=3, end_column=2)
     task_header_cell = ws.cell(row=1, column=2)
@@ -340,48 +436,20 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         cell.font = Font(color="FFFFFF", bold=True)
 
-    row_offset += 2 if not milestoneNames else +3
 
-    milestone_index = 0
-    task_index = 1
-    activity_index = 0
-    task_row_mapping = {}
-    task_milestone_mapping = {}
 
-    for index, row in enumerate(chronogram):
-        if set(row) == {''}:
-            milestone_index += 1
-            task_index = 1
-            continue
 
-        task_label = f"Task {milestone_index + 1}.{task_index}"
-        task_row_mapping[index] = index + row_offset
-        task_milestone_mapping[index] = milestoneNames[milestone_index]
-        ws.cell(row=index + row_offset, column=2, value=task_label)
-        task_index += 1
 
-        if activity_index < len(activity_names):
-            ws.cell(row=index + row_offset, column=3, value=activity_names[activity_index])
-            activity_index += 1
 
-    for index, row in enumerate(chronogram):
-        if index not in task_row_mapping:
-            continue
+    #add_task_dates(chronogram, start_week, ws, year, num_weeks, task_row_mapping, task_milestone_mapping)
+    adjust_column_settings(ws, start_col_index, num_weeks)
 
-        task_excel_row = task_row_mapping[index]
-        for col_index, value in enumerate(row, start=start_col_index):
-            task_cell = ws.cell(row=task_excel_row, column=col_index)
-            if value == 'X':
-                task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+    print("")
+    print("Call from process final week ranges",process_final_week_ranges())
+    print("")
 
-    column_width = 20
-    for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
-        for cell in col:
-            ws.column_dimensions[get_column_letter(cell.column)].width = column_width
 
-    add_task_dates(chronogram, start_week, ws, year, num_weeks, task_row_mapping, task_milestone_mapping)
-
-    adjust_column_settings(ws)
+    
 
     wb.save(filename)
     df.to_csv("chronogram.csv", index=False)
@@ -401,6 +469,10 @@ milestoneNames = []
 milestonesInput = input("Enter the list of milestones (as comma-separated values), or leave empty: ")
 if milestonesInput:
     milestoneNames = [milestone.strip() for milestone in milestonesInput.split(',')]
+    # Track the count of milestones
+    milestone_count = len(milestoneNames)
+else:
+    milestone_count = 0  # No milestones entered
 
 activityNames = []
 milestones_tasks = []
@@ -426,6 +498,10 @@ for index, milestone in enumerate(milestoneNames):
     milestoneActivityNames = [f"{milestone} - {task}" for task in tasks]
     activityNames.extend(milestoneActivityNames)
     milestones_tasks.append((milestone, hours))
+
+    if index == len(milestoneNames) - 1:
+        last_activity = milestoneActivityNames[-1] if milestoneActivityNames else None
+    #print(f"The the last milestone is: {last_activity}")
 
 # Generate the chronogram from user input
 chronogram = allocateTasksToWeeks(milestones_tasks)
