@@ -219,7 +219,7 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
     elif last_end_dates is not None:
         start_dates = [last_end_date + timedelta(days=1) for last_end_date in last_end_dates]
     if not start_dates:
-        start_dates = [datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")]
+        start_dates = [datetime.strptime(f"01/01/{year}", "%m/%d/%Y")]
         milestone_start_date = start_dates[0]
 
     print(f"Calculating week dates from start date: {start_dates[0].strftime('%m/%d/%Y')} for {num_weeks} weeks")
@@ -338,6 +338,10 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     add_task_dates(new_chronogram, start_week, ws, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping)
 
     week_dates = sorted(set(all_week_ranges), key=lambda x: (x[1], datetime.strptime(x[0].split(' - ')[0], '%d/%b')))
+
+    if not week_dates:
+        print("No start date provided. Generating default week dates starting from the first week of the year.")
+        week_dates = get_week_dates("01/01", num_weeks, year)
 
     current_year = week_dates[0][1]
     year_start_col = start_col_index
