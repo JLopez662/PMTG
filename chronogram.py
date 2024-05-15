@@ -390,7 +390,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     for i, (date_range, year) in enumerate(week_dates, start=start_col_index):
         if start_week:
-
             start_date_str, _ = date_range.split(' - ')
             try:
                 start_date = datetime.strptime(start_date_str, "%d/%b")
@@ -476,8 +475,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         for milestone_name, milestone_row in milestone_row_mapping.items():
             milestone_tasks = [row for row, m_name in task_milestone_mapping.items() if m_name == milestone_name]
             if milestone_tasks:
-                min_task_row = min(milestone_tasks)
-                max_task_row = max(milestone_tasks)
                 for col in range(start_col_index, start_col_index + num_weeks):
                     if any(ws.cell(row=task_row_mapping[row], column=col).fill.start_color.index == "FFA500" for row in milestone_tasks):
                         milestone_cell = ws.cell(row=milestone_row, column=col)
