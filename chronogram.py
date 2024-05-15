@@ -6,6 +6,20 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.cell import MergedCell
 
+def format_blank_cells(ws, rows=100, cols=50):
+    """
+    Format all cells in the worksheet to be blank (white background, no borders).
+    By default, it formats a range of 1000 rows and 100 columns.
+    """
+    for row in range(1, rows + 1):
+        for col in range(1, cols + 1):
+            cell = ws.cell(row=row, column=col)
+            cell.fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+            cell.border = Border(left=Side(style=None), 
+                                 right=Side(style=None), 
+                                 top=Side(style=None), 
+                                 bottom=Side(style=None))
+
 def allocateTasksToWeeks(milestones_tasks):
     chronogram = []
     last_end_week = 0  # Track the end week of the last task
@@ -275,6 +289,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     wb = Workbook()
     ws = wb.active
+
+    # Format all cells to be blank before any other processing
+    format_blank_cells(ws)
 
     ###########################Headers area
 
