@@ -205,6 +205,11 @@ current_milestone_count = 1
 last_activity = None
 
 def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_dates=None, is_last_task=False):
+    
+    if not start_date:
+    # Return generic week labels when no start date is provided
+        return [(f"Week {i+1}", year) for i in range(num_weeks + 1)]
+    
     global last_milestone_end_date, current_milestone, milestone_start_date, all_week_ranges, current_milestone_count, milestone_count
 
     week_dates = []
@@ -341,7 +346,14 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     add_task_dates(new_chronogram, start_week, ws, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping)
 
-    week_dates = sorted(set(all_week_ranges), key=lambda x: (x[1], datetime.strptime(x[0].split(' - ')[0], '%d/%b')))
+    if not start_week:
+        # Create week labels as Week1, Week2, etc.
+        week_labels = [f"Week {i+1}" for i in range(num_weeks)]
+        # Create month labels as Month 1, Month 2, etc., assuming 4 weeks per month for simplicity
+        month_labels = [f"Month {i//4 + 1}" for i in range(num_weeks)]
+        week_dates = [(f"Week {i+1}", year) for i in range(num_weeks)]
+    else:
+        week_dates = sorted(set(all_week_ranges), key=lambda x: (x[1], datetime.strptime(x[0].split(' - ')[0], '%d/%b')))
 
     if not week_dates:
         print("No start date provided. Generating default week dates starting from the first week of the year.")
@@ -374,24 +386,51 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     row_offset = 2
     months = {}
 
-    for i, (date_range, year) in enumerate(week_dates, start=start_col_index):
-        start_date_str, _ = date_range.split(' - ')
-        try:
-            start_date = datetime.strptime(start_date_str, "%d/%b")
-            month_name = start_date.strftime("%B")
-        except ValueError:
-            month_name = "Unknown Month"
+    actual_weeks_with_tasks = len(df.columns) - start_col_index + 1
 
-        if month_name not in months:
-            months[month_name] = {'start': i, 'end': i}
+    for i, (date_range, year) in enumerate(week_dates, start=start_col_index):
+        if start_week:
+
+            start_date_str, _ = date_range.split(' - ')
+            try:
+                start_date = datetime.strptime(start_date_str, "%d/%b")
+                month_name = start_date.strftime("%B")
+            except ValueError:
+                month_name = "Unknown Month"
+
+            if month_name not in months:
+                months[month_name] = {'start': i, 'end': i}
+            else:
+                months[month_name]['end'] = i
+
         else:
-            months[month_name]['end'] = i
+            # If no starting week provided, label the "months" as Month 1, Month 2, etc.
+            week_index = i - start_col_index  # Determine the week number
+            month_num = (week_index // 4) + 1  # Month number based on 4 weeks per month
+            month_name = f'Month {month_num}'
+
+            if month_name not in months:
+                months[month_name] = {'start': i, 'end': i}
+
+            if i < actual_weeks_with_tasks:
+                months[month_name]['end'] = i
 
         week_cell = ws.cell(row=row_offset + 1, column=i)
         week_cell.value = date_range
         week_cell.alignment = Alignment(horizontal='center')
         week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         week_cell.font = Font(color="FFFFFF")
+
+    # Now, outside the loop, adjust month end values, merge cells, and fill for "monthly" headers if no start_week provided
+    if not start_week:
+        # First, adjust the end of each month to match the last week with a task or the end of the 4-week block
+        for month_name, month_range in months.items():
+            month_end_week = month_range['start'] + 3  # Default month span of 4 weeks
+            if month_end_week >= actual_weeks_with_tasks + start_col_index - 1:
+                month_end_week = actual_weeks_with_tasks + start_col_index - 1
+            if month_end_week < month_range['start']:
+                month_end_week = month_range['start']  # Ensure the end week does not precede the start week
+            months[month_name]['end'] = month_end_week
 
     for month_name, month_range in months.items():
         if month_range['start'] <= month_range['end']:
@@ -432,8 +471,22 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     adjust_column_settings(ws, start_col_index, num_weeks)
 
+    # Fill milestone cells based on their sub-task cells
+    if not start_week:
+        for milestone_name, milestone_row in milestone_row_mapping.items():
+            milestone_tasks = [row for row, m_name in task_milestone_mapping.items() if m_name == milestone_name]
+            if milestone_tasks:
+                min_task_row = min(milestone_tasks)
+                max_task_row = max(milestone_tasks)
+                for col in range(start_col_index, start_col_index + num_weeks):
+                    if any(ws.cell(row=task_row_mapping[row], column=col).fill.start_color.index == "FFA500" for row in milestone_tasks):
+                        milestone_cell = ws.cell(row=milestone_row, column=col)
+                        milestone_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+
     wb.save(filename)
     df.to_csv("chronogram.csv", index=False)
+
+
 
 # Ask user for the year for the Gantt Chart
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ").strip()
