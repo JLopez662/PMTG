@@ -147,8 +147,14 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
     for milestone_name, start_date in milestone_start_dates.items():
         end_date = milestone_end_dates[milestone_name]
         milestone_row = milestone_row_mapping[milestone_name]
-        ws.cell(row=milestone_row, column=4, value=start_date.strftime("%m/%d"))
-        ws.cell(row=milestone_row, column=5, value=end_date.strftime("%m/%d"))
+        start_date_cell = ws.cell(row=milestone_row, column=4, value=start_date.strftime("%m/%d"))
+        end_date_cell = ws.cell(row=milestone_row, column=5, value=end_date.strftime("%m/%d"))
+        #ws.cell(row=milestone_row, column=4, value=start_date.strftime("%m/%d"))
+        #ws.cell(row=milestone_row, column=5, value=end_date.strftime("%m/%d"))
+
+        # Make milestone start and end dates bold
+        start_date_cell.font = Font(bold=True)
+        end_date_cell.font = Font(bold=True)
 
         # Fill milestone row cells with orange color for the weeks it spans
         for i, (date_range, _) in enumerate(week_dates, start=6):
@@ -171,7 +177,7 @@ def calculate_total_weeks(chronogram):
 
 def adjust_column_settings(ws, start_col_index, num_weeks):
     column_widths = {
-        'B': 5,  # Tasks column
+        'B': 7,  # Tasks column
         'C': 30,  # Activity column
         'D': 12,  # Start Date column
         'E': 12,  # End Date column
@@ -314,15 +320,15 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             ws.merge_cells(start_row=excel_row, start_column=2, end_row=excel_row, end_column=2)
             task_cell = ws.cell(row=excel_row, column=2)
             task_cell.alignment = Alignment(horizontal='center', vertical='center')
-            task_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-            task_cell.font = Font(color="FFFFFF", bold=True)
+            #task_cell.fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+            task_cell.font = Font(color="000000", bold=True)
 
             ws.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter])
             ws.merge_cells(start_row=excel_row, start_column=3, end_row=excel_row, end_column=3)
             cell = ws.cell(row=excel_row, column=3)
             cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-            cell.font = Font(color="FFFFFF", bold=True)
+            #cell.fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+            cell.font = Font(color="000000", bold=True)
 
             milestone_counter += 1
             task_number = 1  # Reset task number for the next milestone
@@ -524,7 +530,8 @@ for index, milestone in enumerate(milestoneNames):
         taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values): ")
     hours = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
-    milestoneActivityNames = [f"{milestone} - {task}" for task in tasks]
+    #milestoneActivityNames = [f"{milestone} - {task}" for task in tasks]
+    milestoneActivityNames = [f"{task}" for task in tasks]
     activityNames.extend(milestoneActivityNames)
     milestones_tasks.append((milestone, hours))
 
