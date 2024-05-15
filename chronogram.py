@@ -299,28 +299,30 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             activity_index += 1
 
     # Write milestones and tasks to the worksheet
+    milestone_counter = 0
     for index, row in enumerate(new_chronogram):
         excel_row = row_offset + index
 
         if set(row) == {''}:
-            milestone_index = (index // 2)
-            ws.cell(row=excel_row, column=2, value=f"Task {milestone_index + 1}")
+            ws.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}")
             ws.merge_cells(start_row=excel_row, start_column=2, end_row=excel_row, end_column=2)
             task_cell = ws.cell(row=excel_row, column=2)
             task_cell.alignment = Alignment(horizontal='center', vertical='center')
             task_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
             task_cell.font = Font(color="FFFFFF", bold=True)
 
-            ws.cell(row=excel_row, column=3, value=milestoneNames[milestone_index])
+            ws.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter])
             ws.merge_cells(start_row=excel_row, start_column=3, end_row=excel_row, end_column=3)
             cell = ws.cell(row=excel_row, column=3)
             cell.alignment = Alignment(horizontal='center', vertical='center')
             cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
             cell.font = Font(color="FFFFFF", bold=True)
+
+            milestone_counter += 1
         else:
             if index in task_row_mapping:
                 task_excel_row = task_row_mapping[index]
-                ws.cell(row=task_excel_row, column=2, value=f"Task {milestone_index + 1}.{index % 2 + 1}")
+                ws.cell(row=task_excel_row, column=2, value=f"Task {milestone_counter}.{task_index}")
                 ws.cell(row=task_excel_row, column=3, value=new_activity_names[index])
 
                 for col_index, value in enumerate(row, start=start_col_index):
