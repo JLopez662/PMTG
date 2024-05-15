@@ -267,8 +267,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     row_offset = 5
 
     milestone_index = 0
-    task_index = 1
     activity_index = 0
+    task_index = 1  # Initialize task_index here
     task_row_mapping = {}
     task_milestone_mapping = {}
     milestone_row_mapping = {}
@@ -280,7 +280,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     for index, row in enumerate(chronogram):
         if set(row) == {''}:
             milestone_index += 1
-            task_index = 1
+            task_index = 1  # Reset task_index for each milestone
             continue
 
         if milestoneNames[milestone_index] not in milestone_row_mapping:
@@ -300,6 +300,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     # Write milestones and tasks to the worksheet
     milestone_counter = 0
+    task_number = 1
     for index, row in enumerate(new_chronogram):
         excel_row = row_offset + index
 
@@ -319,16 +320,19 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             cell.font = Font(color="FFFFFF", bold=True)
 
             milestone_counter += 1
+            task_number = 1  # Reset task number for the next milestone
         else:
             if index in task_row_mapping:
                 task_excel_row = task_row_mapping[index]
-                ws.cell(row=task_excel_row, column=2, value=f"Task {milestone_counter}.{task_index}")
+                task_number_label = f"{milestone_counter}.{task_number}"
+                ws.cell(row=task_excel_row, column=2, value=task_number_label)
                 ws.cell(row=task_excel_row, column=3, value=new_activity_names[index])
 
                 for col_index, value in enumerate(row, start=start_col_index):
                     task_cell = ws.cell(row=task_excel_row, column=col_index)
                     if value == 'X':
                         task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+                task_number += 1
 
     column_width = 20
     for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
