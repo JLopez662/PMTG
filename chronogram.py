@@ -53,6 +53,8 @@ def allocateTasksToWeeks(milestones_tasks):
     return chronogram
 
 
+
+
 # Global storage for all week dates
 all_week_dates = []
 
@@ -98,6 +100,7 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
         return None
 
     current_milestone = None
+    global_start_date = datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")  # Initial global start date for all tasks
 
     def get_next_available_date(date, used_dates):
         while date in used_dates:
@@ -109,6 +112,8 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
 
     print("From add_task_dates", end='\n')
 
+    week_dates = get_week_dates(start_date, num_weeks, year)
+
     for index, task_row in enumerate(chronogram):
         # Check if the row is empty
         if set(task_row) == {''}:
@@ -119,10 +124,9 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
         if current_milestone != milestone_name:
             current_milestone = milestone_name
             print(f"\nProcessing tasks for Milestone: {current_milestone}")
-
-        #num_weeks = len(task_row)
-        num_weeks = calculate_total_weeks(chronogram)
-        week_dates = get_week_dates(start_date, num_weeks, year, milestone_name)
+            if current_milestone and used_end_dates:  # Adjust start date only if we move to a new milestone and have used_end_dates
+                global_start_date = max(used_end_dates) + timedelta(days=1)  # Start the next milestone after the last task end date
+                print(f"Adjusted global_start_date for new milestone: {global_start_date.strftime('%m/%d/%Y')}")
 
         x_indices = [i for i, x in enumerate(task_row) if x == 'X']
         if x_indices and len(week_dates) > x_indices[0]:
@@ -155,6 +159,7 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
                     task_cell = ws.cell(row=task_row_mapping[index], column=i)
                     task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
                     print(f"Filling cell: Row {task_row_mapping[index]}, Column {i} for date range {start_week.strftime('%m/%d')} to {end_week.strftime('%m/%d')}")
+            print(f"Task [{index}]: Start - {task_start_date.strftime('%m/%d')} End - {task_end_date.strftime('%m/%d')}")
         else:
             print(f"Skipping row {index + 1} as it contains no tasks or insufficient weeks.")
 
@@ -212,6 +217,7 @@ milestone_count = 0
 current_milestone_count = 1
 last_activity = None
 
+
 def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_dates=None, is_last_task=False):
     global last_milestone_end_date, current_milestone, milestone_start_date, all_week_ranges, current_milestone_count, milestone_count
 
@@ -248,6 +254,7 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
     if current_milestone_count == milestone_count and milestone_name == current_milestone:
         process_final_week_ranges()
 
+    print("Week dates calculated: ", week_dates)
     return week_dates
 
 
@@ -326,6 +333,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     print("")
     #print("On chronogramToExcel, output of all_week_ranges: ", all_week_ranges)
+    print("")
     #print("Unique week dates after removing duplicates:")
     for week_range in week_dates:
         print(week_range)  # This prints each unique week range
