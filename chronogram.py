@@ -143,12 +143,22 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
         else:
             print(f"Skipping row {index + 1} as it contains no tasks or insufficient weeks.")
 
-    # Add milestone start and end dates to the milestone rows
+    # Add milestone start and end dates to the milestone rows and fill with orange color
     for milestone_name, start_date in milestone_start_dates.items():
         end_date = milestone_end_dates[milestone_name]
         milestone_row = milestone_row_mapping[milestone_name]
         ws.cell(row=milestone_row, column=4, value=start_date.strftime("%m/%d"))
         ws.cell(row=milestone_row, column=5, value=end_date.strftime("%m/%d"))
+
+        # Fill milestone row cells with orange color for the weeks it spans
+        for i, (date_range, _) in enumerate(week_dates, start=6):
+            start_week_str, end_week_str = date_range.split(' - ')
+            start_week = datetime.strptime(f"{start_week_str}/{year}", "%d/%b/%Y")
+            end_week = datetime.strptime(f"{end_week_str}/{year}", "%d/%b/%Y")
+
+            if start_date <= end_week and end_date >= start_week:
+                milestone_cell = ws.cell(row=milestone_row, column=i)
+                milestone_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
 
     return None
 
