@@ -6,36 +6,36 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 
 def allocateTasksToWeeks(milestones_tasks):
-    """
-    Allocate tasks to weeks based on the provided milestones and tasks.
-
-    Args:
-    - milestones_tasks (list of tuples): List of tuples containing milestone name and its tasks.
-
-    Returns:
-    - list: Chronogram list with allocated tasks.
-    """
     chronogram = []
+    last_end_week = 0  # Track the end week of the last task
 
     for milestone_name, tasks in milestones_tasks:
-        colWeekHours = [40]  # First column, representing a work week, or 40 hours
+        if len(chronogram) > 0:
+            last_end_week += 1  # Ensure the new milestone starts on a new week
+
+        colWeekHours = [40] * (last_end_week + 1)  # Ensure we have enough weeks to start
         milestone_rows = []
 
         for task in tasks:
+            initial_task_hours = task  # Store the initial task hours for printing
             weeks = len(colWeekHours)
             taskRow = ['_'] * weeks  # Current row times the weeks needed
             while task > 0:  # While the task has hours left to assign
-                for i in range(len(colWeekHours)):
+                for i in range(last_end_week, len(colWeekHours)):
                     if task <= colWeekHours[i]:  # Task needs fewer hours than available in current work week
                         colWeekHours[i] -= task
                         taskRow[i] = 'X'
                         task = 0  # Task hours fully allocated
+                        last_end_week = max(last_end_week, i)  # Update the end week
+                        print(f"Milestone: {milestone_name}, Task Hours: {initial_task_hours}, Remaining Task: {task}, Week: {i+1}, Assigned: X")
                         break
                     else:  # Task needs more hours than available in current work week
                         if colWeekHours[i] > 0:
                             task -= colWeekHours[i]
                             taskRow[i] = 'X'
                             colWeekHours[i] = 0
+                            last_end_week = max(last_end_week, i)  # Update the end week
+                            print(f"Milestone: {milestone_name}, Task Hours: {initial_task_hours}, Remaining Task: {task}, Week: {i+1}, Assigned: X")
 
                 # If task still has hours left not allocated, add new week
                 if task > 0:
@@ -47,9 +47,10 @@ def allocateTasksToWeeks(milestones_tasks):
         # Add milestone rows to the chronogram
         chronogram.extend(milestone_rows)
         # Add an empty row after each milestone except the last one
-        chronogram.append([''] * len(colWeekHours))
+        if milestone_name != milestones_tasks[-1][0]:
+            chronogram.append([''] * len(colWeekHours))
 
-    return chronogram[:-1]  # Remove the final empty row
+    return chronogram
 
 
 # Global storage for all week dates
@@ -79,9 +80,6 @@ def get_all_week_dates():
     global all_week_dates
     return all_week_dates
 '''
-
-
-
 
 
 
@@ -156,6 +154,7 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
                 if task_start_date <= end_week and task_end_date >= start_week:
                     task_cell = ws.cell(row=task_row_mapping[index], column=i)
                     task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+                    print(f"Filling cell: Row {task_row_mapping[index]}, Column {i} for date range {start_week.strftime('%m/%d')} to {end_week.strftime('%m/%d')}")
         else:
             print(f"Skipping row {index + 1} as it contains no tasks or insufficient weeks.")
 
@@ -197,9 +196,9 @@ def adjust_column_settings(ws, start_col_index, num_weeks):
 def process_final_week_ranges():
     global all_week_ranges
     print("")
-    print("Final Processing of all week dates across milestones:")
-    print("Content: ", all_week_ranges)
-    print("Data Type: ", type(all_week_ranges))
+    #print("Final Processing of all week dates across milestones:")
+    #print("Content: ", all_week_ranges)
+    #print("Data Type: ", type(all_week_ranges))
     return all_week_ranges
 
 
@@ -231,6 +230,8 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
         start_dates = [datetime.strptime(f"{start_date}/{year}", "%m/%d/%Y")]
         milestone_start_date = start_dates[0]
 
+    print(f"Calculating week dates from start date: {start_dates[0].strftime('%m/%d/%Y')} for {num_weeks} weeks")
+    
     current_dates = start_dates
 
     for i in range(num_weeks):
@@ -324,8 +325,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     week_dates = sorted(set(all_week_ranges), key=lambda x: (x[1], datetime.strptime(x[0].split(' - ')[0], '%d/%b')))
 
     print("")
-    print("On chronogramToExcel, output of all_week_ranges: ", all_week_ranges)
-    print("Unique week dates after removing duplicates:")
+    #print("On chronogramToExcel, output of all_week_ranges: ", all_week_ranges)
+    #print("Unique week dates after removing duplicates:")
     for week_range in week_dates:
         print(week_range)  # This prints each unique week range
 
@@ -335,9 +336,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     # Assuming week_dates = get_week_dates(start_week, num_weeks, year) has already been defined
 
     # Printing week_dates
-    print("")
-    print("Week Dates from get_week_dates:", week_dates)
-    print("")
+    #print("")
+   # print("Week Dates from get_week_dates:", week_dates)
+    #print("")
  
 
     #all_dates = get_all_week_dates()
@@ -349,7 +350,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     year_start_col = start_col_index
     
     print("")
-    print("Call from process final week ranges",process_final_week_ranges())
+    #print("Call from process final week ranges",process_final_week_ranges())
     #week_dates = process_final_week_ranges()
 
     for i, (date_range, year_of_week) in enumerate(week_dates, start=start_col_index):
@@ -444,9 +445,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     #add_task_dates(chronogram, start_week, ws, year, num_weeks, task_row_mapping, task_milestone_mapping)
     adjust_column_settings(ws, start_col_index, num_weeks)
 
-    print("")
-    print("Call from process final week ranges",process_final_week_ranges())
-    print("")
+    #print("")
+    #print("Call from process final week ranges",process_final_week_ranges())
+    #print("")
 
 
     
