@@ -65,7 +65,11 @@ def allocateTasksToWeeks(milestones_tasks):
         if milestone_name != milestones_tasks[-1][0]:
             chronogram.append([''] * len(colWeekHours))
 
+        # Add the debug print statement here
+        print(f"Final week of task {milestone_name}: {last_end_week}")
+
     return chronogram
+
 
 # Global storage for all week dates
 all_week_dates = []
@@ -76,6 +80,7 @@ def validate_date(date_text):
         return True
     except ValueError:
         return False
+
 
 def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, row_offset=4):
     if not start_date:
@@ -110,7 +115,11 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
             current_milestone = milestone_name
             print(f"\nProcessing tasks for Milestone: {current_milestone}")
             if current_milestone and used_end_dates:  # Adjust start date only if we move to a new milestone and have used_end_dates
-                global_start_date = max(used_end_dates) + timedelta(days=1)  # Start the next milestone after the last task end date
+                last_end_date = max(used_end_dates)
+                days_until_next_monday = (7 - last_end_date.weekday()) % 7 or 7
+                global_start_date = last_end_date + timedelta(days=1)  # Move to the next Monday
+                print(f"Last end date: {last_end_date.strftime('%m/%d/%Y')}")
+                #print(f"Calculated days_until_next_monday: {days_until_next_monday}")
                 print(f"Adjusted global_start_date for new milestone: {global_start_date.strftime('%m/%d/%Y')}")
 
         x_indices = [i for i, x in enumerate(task_row) if x == 'X']
@@ -123,6 +132,14 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
             task_start_date = datetime.strptime(f"{start_week_range}/{year}", "%d/%b/%Y")
             task_end_date = datetime.strptime(f"{end_week_range}/{year}", "%d/%b/%Y")
 
+            
+            # Correct the end year if needed
+            if task_start_date > task_end_date:
+
+                task_end_date = datetime.strptime(f"{end_week_range}/{year + 1}", "%d/%b/%Y")
+
+
+
             task_start_date = get_next_available_date(task_start_date, used_start_dates)
             duration_days = (task_end_date - task_start_date).days
             task_end_date = task_start_date + timedelta(days=duration_days)
@@ -131,13 +148,16 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
             used_start_dates.append(task_start_date)
             used_end_dates.append(task_end_date)
 
+
+            # Add the debug print statement here
+            print(f"Task [{index}] start date: {task_start_date.strftime('%m/%d/%Y')}, end date: {task_end_date.strftime('%m/%d/%Y')}")
+
+
             # Write the start and end dates only if the cell is not part of a merged cell range
             if not isinstance(ws.cell(row=task_row_mapping[index], column=4), MergedCell):
                 start_date_cell = ws.cell(row=task_row_mapping[index], column=4, value=task_start_date.strftime("%m/%d"))
-                #start_date_cell.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
             if not isinstance(ws.cell(row=task_row_mapping[index], column=5), MergedCell):
                 end_date_cell = ws.cell(row=task_row_mapping[index], column=5, value=task_end_date.strftime("%m/%d"))
-                #end_date_cell.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
 
             # Track start and end dates for milestones
             if milestone_name not in milestone_start_dates or task_start_date < milestone_start_dates[milestone_name]:
@@ -150,6 +170,13 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
                 start_week_str, end_week_str = date_range.split(' - ')
                 start_week = datetime.strptime(f"{start_week_str}/{year}", "%d/%b/%Y")
                 end_week = datetime.strptime(f"{end_week_str}/{year}", "%d/%b/%Y")
+
+                
+                # Correct the end year if needed
+                if start_week > end_week:
+
+                    end_week = datetime.strptime(f"{end_week_str}/{year + 1}", "%d/%b/%Y")
+
 
                 if task_start_date <= end_week and task_end_date >= start_week:
                     task_cell = ws.cell(row=task_row_mapping[index], column=i)
@@ -169,20 +196,23 @@ def add_task_dates(chronogram, start_date, ws, year, num_weeks, task_row_mapping
         start_date_cell.font = Font(bold=True)
         end_date_cell.font = Font(bold=True)
 
-        #start_date_cell.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
-        #end_date_cell.border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
-
         # Fill milestone row cells with green color for the weeks it spans
         for i, (date_range, _) in enumerate(week_dates, start=6):
             start_week_str, end_week_str = date_range.split(' - ')
             start_week = datetime.strptime(f"{start_week_str}/{year}", "%d/%b/%Y")
             end_week = datetime.strptime(f"{end_week_str}/{year}", "%d/%b/%Y")
 
+            # Correct the end year if needed
+            if start_week > end_week:
+
+                end_week = datetime.strptime(f"{end_week_str}/{year + 1}", "%d/%b/%Y")
+
             if start_date <= end_week and end_date >= start_week:
                 milestone_cell = ws.cell(row=milestone_row, column=i)
                 milestone_cell.fill = PatternFill(start_color="32a852", end_color="32a852", fill_type="solid")
 
     return None
+
 
 
 def calculate_total_weeks(chronogram):
