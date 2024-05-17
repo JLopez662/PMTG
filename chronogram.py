@@ -5,6 +5,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.cell import MergedCell
+from copy import copy
 
 def format_blank_cells(ws, rows=100, cols=50):
     """
