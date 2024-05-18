@@ -131,7 +131,7 @@ def add_task_dates(chronogram, start_date, ws, ws_month, year, num_weeks, task_r
             task_start_date = datetime.strptime(f"{start_week_range}/{year}", "%d/%b/%Y")
             task_end_date = datetime.strptime(f"{end_week_range}/{year}", "%d/%b/%Y")
 
-            if task_start_date > task_end_date:
+            if task_start_date.month == 12 and task_end_date.month == 1:
                 task_end_date = datetime.strptime(f"{end_week_range}/{year + 1}", "%d/%b/%Y")
 
             original_task_start_date = task_start_date
@@ -223,6 +223,8 @@ def add_task_dates(chronogram, start_date, ws, ws_month, year, num_weeks, task_r
 
     return None
 
+
+
 def calculate_total_weeks(chronogram):
     max_length = max(len(row) for row in chronogram if set(row) != {''})
     return max_length
@@ -303,9 +305,11 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
 
     for i in range(num_weeks):
         end_dates = [current_date + timedelta(days=6) for current_date in current_dates]
-        current_week_ranges = [f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}" for current_date, end_date in zip(current_dates, end_dates)]
-        week_dates.extend([(week_range, current_date.year) for week_range, current_date in zip(current_week_ranges, current_dates)])
-        all_week_ranges.extend([(week_range, current_date.year) for week_range, current_date in zip(current_week_ranges, current_dates)])
+        current_week_ranges = [
+            f"{current_date.strftime('%d/%b')} - {end_date.strftime('%d/%b')}" for current_date, end_date in zip(current_dates, end_dates)
+        ]
+        week_dates.extend([(week_range, current_date.year) for week_range, current_date, end_date in zip(current_week_ranges, current_dates, end_dates)])
+        all_week_ranges.extend([(week_range, current_date.year) for week_range, current_date, end_date in zip(current_week_ranges, current_dates, end_dates)])
         current_dates = [end_date + timedelta(days=1) for end_date in end_dates]
 
     if milestone_name:
@@ -317,6 +321,7 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
 
     print("Week dates calculated: ", week_dates)
     return week_dates
+
 
 def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, filename="chronogram.xlsx"):
     start_col_index = 6
@@ -427,11 +432,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             cell.border = thin_border
 
             ws_month.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}").font = Font(bold=True)
-
             ws_month.cell(row=excel_row, column=2).border = thin_border
 
             ws_month.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter]).font = Font(bold=True)
-
             ws_month.cell(row=excel_row, column=3).border = thin_border
 
             milestone_counter += 1
@@ -592,11 +595,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         milestone_end_date = ws.cell(row=milestone_row, column=5).value
 
         ws_month.cell(row=milestone_row, column=4, value=milestone_start_date).font = Font(bold=True)
-
         ws_month.cell(row=milestone_row, column=4).border = thin_border
 
         ws_month.cell(row=milestone_row, column=5, value=milestone_end_date).font = Font(bold=True)
-
         ws_month.cell(row=milestone_row, column=5).border = thin_border
 
         for col in range(start_col_index, start_col_index + num_weeks):
@@ -606,6 +607,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     wb.save(filename)
     df.to_csv("chronogram.csv", index=False)
+
 
 
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ").strip()
