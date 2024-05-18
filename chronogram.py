@@ -152,7 +152,7 @@ def add_task_dates(chronogram, start_date, ws, ws_month, year, num_weeks, task_r
                     milestone_week_hours[current_milestone][i] = 0
                     print(f"Partially assigned Task [{index}] to Week {i + 1} and moving remaining hours to the next week. Remaining Task Hours: {task_hour}")
 
-            print(f"Task [{index}] start date: {original_task_start_date.strftime('%d/%b/%Y')}, end date: {original_task_end_date.strftime('%d/%b/%Y')}, Task Hours: {task_hours[task_hours_index - 1]}")
+            print(f"Task [{index}] xstart date: {original_task_start_date.strftime('%d/%b/%Y')}, xend date: {original_task_end_date.strftime('%d/%b/%Y')}, Task Hours: {task_hours[task_hours_index - 1]}")
 
             thin_border = Border(
                 left=Side(style='thin'),
@@ -426,8 +426,13 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             cell.font = Font(color="000000", bold=True)
             cell.border = thin_border
 
-            ws_month.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}").border = thin_border
-            ws_month.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter]).border = thin_border
+            ws_month.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}").font = Font(bold=True)
+
+            ws_month.cell(row=excel_row, column=2).border = thin_border
+
+            ws_month.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter]).font = Font(bold=True)
+
+            ws_month.cell(row=excel_row, column=3).border = thin_border
 
             milestone_counter += 1
             task_number = 1
@@ -586,8 +591,13 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         milestone_start_date = ws.cell(row=milestone_row, column=4).value
         milestone_end_date = ws.cell(row=milestone_row, column=5).value
 
-        ws_month.cell(row=milestone_row, column=4, value=milestone_start_date).border = thin_border
-        ws_month.cell(row=milestone_row, column=5, value=milestone_end_date).border = thin_border
+        ws_month.cell(row=milestone_row, column=4, value=milestone_start_date).font = Font(bold=True)
+
+        ws_month.cell(row=milestone_row, column=4).border = thin_border
+
+        ws_month.cell(row=milestone_row, column=5, value=milestone_end_date).font = Font(bold=True)
+
+        ws_month.cell(row=milestone_row, column=5).border = thin_border
 
         for col in range(start_col_index, start_col_index + num_weeks):
             if ws.cell(row=milestone_row, column=col).fill.start_color.index == "32a852":
