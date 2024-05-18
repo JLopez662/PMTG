@@ -227,7 +227,7 @@ def calculate_total_weeks(chronogram):
     max_length = max(len(row) for row in chronogram if set(row) != {''})
     return max_length
 
-def adjust_column_settings(ws, start_col_index, num_weeks):
+def adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_width=20):  # Increased width for demonstration
     column_widths = {
         'B': 7,
         'C': 30,
@@ -237,15 +237,31 @@ def adjust_column_settings(ws, start_col_index, num_weeks):
 
     for col, width in column_widths.items():
         ws.column_dimensions[col].width = width
+        ws_month.column_dimensions[col].width = width  # Adjust both ws and ws_month
 
-    week_date_col_width = 16
     for i in range(num_weeks):
         col_letter = get_column_letter(start_col_index + i)
-        ws.column_dimensions[col_letter].width = week_date_col_width
+        ws.column_dimensions[col_letter].width = date_col_width
+        ws_month.column_dimensions[col_letter].width = date_col_width  # Adjust both ws and ws_month
 
     for row in ws.iter_rows(min_row=4, max_row=ws.max_row, min_col=2, max_col=3):
         for cell in row:
             cell.alignment = Alignment(wrap_text=True)
+
+    for row in ws_month.iter_rows(min_row=4, max_row=ws_month.max_row, min_col=2, max_col=3):
+        for cell in row:
+            cell.alignment = Alignment(wrap_text=True)
+
+
+'''
+def adjust_column_settings_both(ws, ws_month, start_col_index, num_weeks):
+    adjust_column_settings(ws, start_col_index, num_weeks, date_col_width=16)  # Standard width for weeks
+    adjust_column_settings(ws_month, start_col_index, num_weeks, date_col_width=20)  # Increased width for months
+
+    # After creating and formatting both ws and ws_month, call the function for both worksheets
+    adjust_column_settings_both(ws, ws_month, start_col_index, num_weeks)
+'''
+
 
 def process_final_week_ranges():
     global all_week_ranges
@@ -306,6 +322,14 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     start_col_index = 6
     num_weeks = calculate_total_weeks(chronogram)
 
+    # Define a thin border style
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
     df = pd.DataFrame(chronogram)
     for col in range(start_col_index - 1):
         df.insert(col, 'Empty{}'.format(col), [''] * df.shape[0])
@@ -334,24 +358,20 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
         header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         header_cell.font = Font(color="FFFFFF", bold=True)
-        header_cell.border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
+        header_cell.border = thin_border
 
         ws_month.merge_cells(start_row=1, start_column=col, end_row=3, end_column=col)
         month_header_cell = ws_month.cell(row=1, column=col, value=header)
         month_header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
         month_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         month_header_cell.font = Font(color="FFFFFF", bold=True)
-        month_header_cell.border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
+        month_header_cell.border = thin_border
+
+        # Apply borders to all merged cells for the header
+        for row in range(1, 4):
+            for col in range(col, col+1):  # This loop is needed to iterate through columns in the merged range
+                ws.cell(row=row, column=col).border = thin_border
+                ws_month.cell(row=row, column=col).border = thin_border
 
     row_offset = 5
 
@@ -385,13 +405,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         if activity_index < len(activity_names):
             new_activity_names.append(activity_names[activity_index])
             activity_index += 1
-
-    thin_border = Border(
-        left=Side(style='thin'),
-        right=Side(style='thin'),
-        top=Side(style='thin'),
-        bottom=Side(style='thin')
-    )
 
     milestone_counter = 0
     task_number = 1
@@ -433,10 +446,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                         task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
                 task_number += 1
 
-    column_width = 20
-    for col in ws.iter_cols(min_col=start_col_index, max_col=ws.max_column, min_row=1, max_row=ws.max_row):
-        for cell in col:
-            ws.column_dimensions[get_column_letter(cell.column)].width = column_width
+    adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_width=20)  # Ensure this applies to both sheets
 
     add_task_dates(new_chronogram, start_week, ws, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
 
