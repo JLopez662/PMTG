@@ -1,7 +1,3 @@
-import os
-import subprocess
-import platform
-import tempfile
 import pandas as pd
 import re
 from datetime import timedelta, datetime
@@ -637,9 +633,13 @@ for index, milestone in enumerate(milestoneNames):
 
     print()  
 
+    print()  
+
     taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values):\nInput: ")
-    while not taskHoursInput:
+    while not taskHoursInput or not all(x.strip().isdigit() for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()):
+        print("Input format is incorrect. Please enter only numbers separated by commas or spaces.")
         taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values):\nInput: ")
+
     hours = [float(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
     milestoneActivityNames = [f"{task}" for task in tasks]
