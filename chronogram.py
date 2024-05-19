@@ -620,41 +620,50 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
 
 
-yearInput = input("Add the year for the Gantt Chart (leave empty if using current year): ").strip()
+yearInput = input("Add the year for the Gantt Chart (leave empty if using current year):\nInput: ").strip()
 year = int(yearInput) if yearInput else datetime.now().year
 
-start_week = input("Add the starting week (MM/DD) (leave empty if not): ").strip()
+print()
+
+start_week = input("Add the starting week (MM/DD) (leave empty if not):\nInput: ").strip()
 while start_week and not validate_date(start_week):
-    start_week = input("The format is incorrect. Please use MM/DD format or leave empty: ").strip()
+    start_week = input("The format is incorrect. Please use MM/DD format or leave empty:\nInput: ").strip()
+
+print() 
 
 milestoneNames = []
-milestonesInput = input("Enter the list of milestones (as comma-separated values), or leave empty: ")
+milestonesInput = input("Enter the list of milestones (as comma-separated values), or leave empty:\nInput: ")
 if milestonesInput:
     milestoneNames = [milestone.strip() for milestone in milestonesInput.split(',')]
     milestone_count = len(milestoneNames)
 else:
     milestone_count = 0
 
+print()  
+
 activityNames = []
 milestones_tasks = []
 task_hours = []
 
 for index, milestone in enumerate(milestoneNames):
-    #print(f"Adding tasks for Milestone: {milestone}")
+    print()
+    print(f"Adding tasks for Milestone: {milestone}")
 
-    tasksInput = input(f"Enter the list of tasks for {milestone} (as comma-separated values): ")
+    tasksInput = input(f"Enter the list of tasks for {milestone} (as comma-separated values):\nInput: ")
     while not tasksInput:
-        tasksInput = input(f"Add at least one task for {milestone} (as comma-separated values): ")
+        tasksInput = input(f"Add at least one task for {milestone} (as comma-separated values):\nInput: ")
 
     tasks = [task.strip() for task in tasksInput.split(',')]
     while not all(tasks):
-        #print("Task names can't be empty. Please enter valid task names.")
-        tasksInput = input(f"Enter the list of tasks for {milestone} (as comma-separated values): ")
+        print("Task names can't be empty. Please enter valid task names.")
+        tasksInput = input(f"Enter the list of tasks for {milestone} (as comma-separated values):\nInput: ")
         tasks = [task.strip() for task in tasksInput.split(',')]
 
-    taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values): ")
+    print()  
+
+    taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values):\nInput: ")
     while not taskHoursInput:
-        taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values): ")
+        taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values):\nInput: ")
     hours = [int(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
     milestoneActivityNames = [f"{task}" for task in tasks]
@@ -665,6 +674,9 @@ for index, milestone in enumerate(milestoneNames):
 
     if index == len(milestoneNames) - 1:
         last_activity = milestoneActivityNames[-1] if milestoneActivityNames else None
+
+print() 
+print() 
 
 chronogram = allocateTasksToWeeks(milestones_tasks)
 
