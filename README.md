@@ -1,28 +1,13 @@
-# ScheduleChronogram
+# Project Management Excel Tool (PMXT) - Gantt Chart Generator
 
 Generates a visual chronogram in Excel, mapping out task hours across workweeks to aid in project management.
+- ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
 
 ## Purpose
 
-The ScheduleChronogram serves as an automated solution for generating detailed chronograms directly in Excel, ideal for project managers and teams.
+The Project Management Excel Tool (PMXT) - Gantt Chart Generator serves as an automated solution for generating detailed chronograms directly in Excel, ideal for project managers and teams.
 
 It simplifies the grouping of tasks throughout workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
-
-## Prerequisites
-### Python:
-Please note that Python 3 must be installed on your system to use this script. If you do not have Python 3, please install it from the [official Python website](https://www.python.org/) or use your system's package manager.
-
-### Python Libraries:
-Before running this script, you must have the following Python libraries installed:
-If you do not have Python 3, please install it from the official Python website or use your system's package manager.
-
-- `pandas`
-- `openpyxl`
-
-You can install these libraries using pip with the following command:
-
-- `pip install pandas`
-- `pip install openpyxl`
 
 ## Usage Instructions
 
@@ -35,11 +20,36 @@ You can install these libraries using pip with the following command:
 
 3. **Execute the Script**
    Run the script by typing the following command into the terminal:
-- `chronogram.sh`
+   - `chronogram.sh`
 
-4. **Enter Task Hours**
-   When prompted with Add tasks hours (as comma-separated values):, input your task hours. Example input:
-- 40, 40, 60, 32, 8, 24, 40, 160
+4. **Provide Input Data**
+   When prompted, provide the following inputs:
+
+   Year for the Gantt Chart
+   Enter the year for the Gantt Chart. If you leave this empty, the current year will be used.
+
+      - Example: `2024`
+
+   Starting Week Date
+   Enter the starting week in MM/DD format. If you leave this empty, it will start from the first week of the year.
+
+      - Example: `05/20`
+
+   List of Milestones
+   Enter the list of milestones as comma-separated values.
+
+      - Example: `Requirements Gathering, Design, Development, Testing, Deployment, Maintenance`
+
+   Tasks for Each Milestone
+   For each milestone, enter the list of tasks as comma-separated values.
+
+      - Example for "Requirements Gathering": `Initial Meeting, Stakeholder Interviews, Requirements Documentation`
+
+   Hours for Tasks under Each Milestone
+   For each milestone, enter the hours for each task as comma-separated values.
+
+      - Example for "Requirements Gathering" tasks: `10, 15, 20`
+
   
 5. **Access the Chronogram**
    After providing the input, the script will generate two files in the same directory:
@@ -47,7 +57,28 @@ You can install these libraries using pip with the following command:
 - `chronogram.csv: A CSV file with the data used to generate the chronogram.`
 
 6. **Open and view the Chronogram**
-  Open the chronogram.xlsx file in Excel to view your visual chronogram.
-  - For this input: 40, 40, 60, 32, 8, 24, 40, 160, the excel file would display a chronogram like this example:
-![Chronogram Example](./chronogram_excel1.png)
+  Open the chronogram.xlsx file in Excel to view your visual chronogram with two sheets, Weekly and Monthly Gantt Chart.
+  - 
+      ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
 
+      ![Chronogram Monthly](./Gantt_Chart_Months.png)
+
+      ![Chronogram Inputs](./Chronogram_Input_Tasks.png)
+
+## Prerequisites
+### Python:
+Please note that Python 3 must be installed on your system to use this script. If you do not have Python 3, please install it from the [official Python website](https://www.python.org/) or use your system's package manager.
+
+### Python Libraries:
+Before running this script, you must have the following Python libraries installed:
+If you do not have Python 3, please install it from the official Python website or use your system's package manager.
+
+- `pandas`
+- `openpyxl`
+- `re`
+
+You can install these libraries using pip with the following command:
+
+- `pip install pandas`
+- `pip install openpyxl`
+- `pip install re`
