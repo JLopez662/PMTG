@@ -466,11 +466,13 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                     task_cell = ws.cell(row=task_excel_row, column=col_index)
                     if value == 'X':
                         task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+                        task_cell.border = thin_border
                 task_number += 1
 
     adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_width=20)
 
     add_task_dates(new_chronogram, start_week, ws, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
+    
 
     if not start_week:
         week_labels = [f"Week {i+1}" for i in range(num_weeks)]
