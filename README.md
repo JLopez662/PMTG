@@ -1,11 +1,11 @@
-# ScheduleChronogram
+# Project Management Excel Tool (PMXT) - Gantt Chart Generator
 
 Generates a visual chronogram in Excel, mapping out task hours across workweeks to aid in project management.
 - ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
 
 ## Purpose
 
-The ScheduleChronogram serves as an automated solution for generating detailed chronograms directly in Excel, ideal for project managers and teams.
+The Project Management Excel Tool (PMXT) - Gantt Chart Generator serves as an automated solution for generating detailed chronograms directly in Excel, ideal for project managers and teams.
 
 It simplifies the grouping of tasks throughout workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
 
