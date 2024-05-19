@@ -1,11 +1,23 @@
 import pandas as pd
+import os
 import re
+import time 
 from datetime import timedelta, datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.cell import MergedCell
 from copy import copy
+
+def is_file_open(file_path):
+    try:
+        # Try to open the file in append mode
+        with open(file_path, 'a'):
+            pass
+    except IOError:
+        # If an IOError is raised, it means the file is open
+        return True
+    return False
 
 def format_blank_cells(ws, rows=100, cols=50):
     for row in range(1, rows + 1):
@@ -322,6 +334,23 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     )
 
     df = pd.DataFrame(chronogram)
+
+    # Check if file is open
+    if is_file_open(filename):
+        print(f"File {filename} is open. Attempting to save with a new name.")
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        filename = f"chronogram_{timestamp}.xlsx"
+
+    try:
+        df.to_excel(filename, index=False, header=False)
+    except PermissionError:
+        print(f"Permission denied for file {filename}. Attempting to save with a new name.")
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        backup_filename = f"chronogram_{timestamp}.xlsx"
+        df.to_excel(backup_filename, index=False, header=False)
+        print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
+
+
     for col in range(start_col_index - 1):
         df.insert(col, 'Empty{}'.format(col), [''] * df.shape[0])
     df.to_excel(filename, index=False, header=False)
@@ -589,8 +618,24 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                 ws_month.cell(row=milestone_row, column=col).fill = PatternFill(start_color="32a852", end_color="32a852", fill_type="solid")
                 ws_month.cell(row=milestone_row, column=col).border = thin_border
 
-    wb.save(filename)
-    df.to_csv("chronogram.csv", index=False)
+    # Get the current working directory
+    current_directory = os.getcwd()
+
+    try:
+        df.to_excel(filename, index=False, header=False)
+        wb.save(filename)
+        df.to_csv("chronogram.csv", index=False)
+        print("The excel file has been generated in the directory:", current_directory, "\n")
+        print(f"The Gantt Chart Excel file has been successfully generated as {filename}.")
+    except PermissionError:
+        print(f"Permission denied for file {filename}. Attempting to save with a new name.")
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        backup_filename = f"chronogram_{timestamp}.xlsx"
+        wb.save(backup_filename)
+        df.to_excel(backup_filename, index=False, header=False)
+        df.to_csv(f"chronogram_{timestamp}.csv", index=False)
+        print("The excel file has been generated in the directory:", current_directory, "\n")
+        print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
 
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year):\nInput: ").strip()
 year = int(yearInput) if yearInput else datetime.now().year
@@ -652,8 +697,6 @@ for index, milestone in enumerate(milestoneNames):
         last_activity = milestoneActivityNames[-1] if milestoneActivityNames else None
 
 print("\n") 
-
-print("The Gantt Chart Excel file has been successfully generated.")
 
 chronogram = allocateTasksToWeeks(milestones_tasks)
 chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, task_hours, "chronogram.xlsx")
