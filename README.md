@@ -1,13 +1,14 @@
-# Project Management Excel Tool (PMXT) - Gantt Chart Generator
+# Project Management Excel Tools (PMXT) 
 
-Generates a visual chronogram in Excel, mapping out task hours across workweeks to aid in project management.
+Generates a visual chronogram and a project schedule in Excel, mapping out Milestones and task with hours across workweeks to aid in project management.
 - ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
+- ![Chronogram Monthly](./Project_Schedule.png)
 
 ## Purpose
 
-The Project Management Excel Tool (PMXT) - Gantt Chart Generator serves as an automated solution for generating detailed chronograms directly in Excel, ideal for project managers and teams.
+The Project Management Excel Tools (PMXT) serves as an automated solution for generating detailed chronograms and project schedule directly in Excel, ideal for project managers and teams.
 
-It simplifies the grouping of tasks throughout workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
+It simplifies the grouping of tasks throughout milestones on workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
 
 ## Usage Instructions
 
@@ -33,7 +34,7 @@ It simplifies the grouping of tasks throughout workweeks into simple, visual rep
    Starting Week Date
    Enter the starting week in MM/DD format. If you leave this empty, it will start from the first week of the year.
 
-      - Example: `05/20`
+      - Example: `05/01`
 
    List of Milestones
    Enter the list of milestones as comma-separated values.
@@ -63,6 +64,8 @@ It simplifies the grouping of tasks throughout workweeks into simple, visual rep
 
       ![Chronogram Monthly](./Gantt_Chart_Months.png)
 
+      ![Chronogram Monthly](./Project_Schedule.png)
+
       ![Chronogram Inputs](./Chronogram_Input_Tasks.png)
 
 ## Prerequisites
@@ -76,9 +79,11 @@ If you do not have Python 3, please install it from the official Python website 
 - `pandas`
 - `openpyxl`
 - `re`
+- `os`
 
 You can install these libraries using pip with the following command:
 
 - `pip install pandas`
 - `pip install openpyxl`
 - `pip install re`
+- - `pip install os`
