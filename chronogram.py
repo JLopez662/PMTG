@@ -98,8 +98,6 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
 
     milestone_week_hours = {}
 
-    #print("From add_task_dates", end='\n')
-
     week_dates = get_week_dates(start_date, num_weeks, year)
 
     milestone_start_dates = {}
@@ -109,7 +107,6 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
 
     for index, task_row in enumerate(chronogram):
         if set(task_row) == {''}:
-            #print(f"Skipping empty row {index + 1}")
             continue
 
         milestone_name = task_milestone_mapping[index]
@@ -117,20 +114,15 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
         task_hour = task_hours[task_hours_index]
         task_hours_index += 1
 
-        #print(f"Checking Task [{index}] for Milestone: {milestone_name} with Task Hours: {task_hour}")
-
         if current_milestone != milestone_name:
             current_milestone = milestone_name
 
             milestone_week_hours[current_milestone] = [40.0] * num_weeks
 
-            #print(f"\nProcessing tasks for Milestone: {current_milestone}")
             if current_milestone and used_end_dates:
                 last_end_date = max(used_end_dates)
                 days_until_next_monday = (7 - last_end_date.weekday()) % 7 or 7
                 global_start_date = last_end_date + timedelta(days=1)
-                #print(f"Last end date: {last_end_date.strftime('%m/%d/%Y')}")
-                #print(f"Adjusted global_start_date for new milestone: {global_start_date.strftime('%m/%d/%Y')}")
 
         x_indices = [i for i, x in enumerate(task_row) if x == 'X']
         if x_indices and len(week_dates) > x_indices[0]:
@@ -146,33 +138,23 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
             task_start_date = datetime.strptime(f"{start_week_range}/{start_year}", "%d/%b/%Y")
             task_end_date = datetime.strptime(f"{end_week_range}/{end_year}", "%d/%b/%Y")
 
-            #print(f"Debug: Initial start_week_range = {start_week_range}, start_year = {start_year}, end_week_range = {end_week_range}, end_year = {end_year}")
-            #print(f"Debug: Calculated task_start_date = {task_start_date}, task_end_date = {task_end_date}")
-
             if task_start_date.month == 12 and task_end_date.month == 1:
                 task_end_date = datetime.strptime(f"{end_week_range}/{start_year + 1}", "%d/%b/%Y")
 
             original_task_start_date = task_start_date
             original_task_end_date = task_end_date
 
-            #print(f"Debug: Adjusted task_start_date = {task_start_date}, task_end_date = {task_end_date}")
-
             for i in range(x_indices[0], len(milestone_week_hours[current_milestone])):
-                #print(f"Checking Week {i + 1} for task allocation with available hours: {milestone_week_hours[current_milestone][i]}")
                 if task_hour <= milestone_week_hours[current_milestone][i]:
                     milestone_week_hours[current_milestone][i] -= task_hour
                     task_start_date = get_next_available_date(task_start_date, used_start_dates)
                     task_end_date = task_start_date + timedelta(days=6)
                     used_start_dates.append(task_start_date)
                     used_end_dates.append(task_end_date)
-                    #print(f"Assigned Task [{index}] to Week {i + 1} (Date Range: {original_task_start_date.strftime('%d/%b')} to {original_task_end_date.strftime('%d/%b')}) with Task Hours: {task_hour}")
                     break
                 else:
                     task_hour -= milestone_week_hours[current_milestone][i]
                     milestone_week_hours[current_milestone][i] = 0
-                    #print(f"Partially assigned Task [{index}] to Week {i + 1} and moving remaining hours to the next week. Remaining Task Hours: {task_hour}")
-
-            #print(f"Task [{index}] xstart date: {original_task_start_date.strftime('%d/%b/%Y')}, xend date: {original_task_end_date.strftime('%d/%b/%Y')}, Task Hours: {task_hours[task_hours_index - 1]}")
 
             thin_border = Border(
                 left=Side(style='thin'),
@@ -182,18 +164,17 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
             )
 
             if not isinstance(ws.cell(row=task_row_mapping[index], column=4), MergedCell):
-                start_date_cell = ws.cell(row=task_row_mapping[index], column=4, value=original_task_start_date.strftime("%d-%b"))
+                start_date_cell = ws.cell(row=task_row_mapping[index], column=4, value=original_task_start_date.strftime("%d-%b-%Y"))
                 start_date_cell.border = thin_border
             if not isinstance(ws.cell(row=task_row_mapping[index], column=5), MergedCell):
-                end_date_cell = ws.cell(row=task_row_mapping[index], column=5, value=original_task_end_date.strftime("%d-%b"))
+                end_date_cell = ws.cell(row=task_row_mapping[index], column=5, value=original_task_end_date.strftime("%d-%b-%Y"))
                 end_date_cell.border = thin_border
 
-            # Add task dates for Project Schedule sheet
             if not isinstance(ws_project_schedule.cell(row=task_row_mapping[index], column=4), MergedCell):
-                start_date_cell_ps = ws_project_schedule.cell(row=task_row_mapping[index], column=4, value=original_task_start_date.strftime("%d-%b"))
+                start_date_cell_ps = ws_project_schedule.cell(row=task_row_mapping[index], column=4, value=original_task_start_date.strftime("%d-%b-%Y"))
                 start_date_cell_ps.border = thin_border
             if not isinstance(ws_project_schedule.cell(row=task_row_mapping[index], column=5), MergedCell):
-                end_date_cell_ps = ws_project_schedule.cell(row=task_row_mapping[index], column=5, value=original_task_end_date.strftime("%d-%b"))
+                end_date_cell_ps = ws_project_schedule.cell(row=task_row_mapping[index], column=5, value=original_task_end_date.strftime("%d-%b-%Y"))
                 end_date_cell_ps.border = thin_border
 
             if milestone_name not in milestone_start_dates or original_task_start_date < milestone_start_dates[milestone_name]:
@@ -213,24 +194,20 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
                     task_cell = ws.cell(row=task_row_mapping[index], column=i)
                     task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
                     task_cell.border = thin_border
-                    #print(f"Filling cell: Row {task_row_mapping[index]}, Column {i} for date range {start_week.strftime('%d/%b')} to {end_week.strftime('%d/%b')}")
-            #print(f"Task [{index}]: Start - {original_task_start_date.strftime('%d/%b')} End - {original_task_end_date.strftime('%d/%b')}")
-        #else:
-            #print(f"Skipping row {index + 1} as it contains no tasks or insufficient weeks.")
 
     for milestone_name, start_date in milestone_start_dates.items():
         end_date = milestone_end_dates[milestone_name]
         milestone_row = milestone_row_mapping[milestone_name]
-        start_date_cell = ws.cell(row=milestone_row, column=4, value=start_date.strftime("%d-%b"))
+        start_date_cell = ws.cell(row=milestone_row, column=4, value=start_date.strftime("%d-%b-%Y"))
         start_date_cell.font = Font(bold=True)
         start_date_cell.border = thin_border
 
-        end_date_cell = ws.cell(row=milestone_row, column=5, value=end_date.strftime("%d-%b"))
+        end_date_cell = ws.cell(row=milestone_row, column=5, value=end_date.strftime("%d-%b-%Y"))
         end_date_cell.font = Font(bold=True)
         end_date_cell.border = thin_border
 
-        ws_month.cell(row=milestone_row, column=4, value=start_date.strftime("%d-%b")).border = thin_border
-        ws_month.cell(row=milestone_row, column=5, value=end_date.strftime("%d-%b")).border = thin_border
+        ws_month.cell(row=milestone_row, column=4, value=start_date.strftime("%d-%b-%Y")).border = thin_border
+        ws_month.cell(row=milestone_row, column=5, value=end_date.strftime("%d-%b-%Y")).border = thin_border
 
         for i, (date_range, date_year) in enumerate(week_dates, start=6):
             start_week_str, end_week_str = date_range.split(' - ')
@@ -250,6 +227,7 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
                 milestone_month_cell.border = thin_border
 
     return None
+
 
 def calculate_total_weeks(chronogram):
     max_length = max(len(row) for row in chronogram if set(row) != {''})
@@ -285,9 +263,10 @@ def add_status_conditional_formatting(ws, start_row, end_row, col_index):
     yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
     red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
     white_font = Font(color="FFFFFF")
+    black_font = Font(color="000000")
 
-    ongoing_dxf = DifferentialStyle(fill=green_fill, font=white_font)
-    at_risk_dxf = DifferentialStyle(fill=yellow_fill, font=white_font)
+    ongoing_dxf = DifferentialStyle(fill=green_fill, font=black_font)
+    at_risk_dxf = DifferentialStyle(fill=yellow_fill, font=black_font)
     delayed_dxf = DifferentialStyle(fill=red_fill, font=white_font)
 
     ongoing_rule = Rule(type="containsText", operator="containsText", text="Ongoing", dxf=ongoing_dxf)
@@ -645,22 +624,33 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     status_validation.errorTitle = 'Invalid Entry'
 
     status_col_index = 6  # Assuming the "Status" column is at index 6
+
+    present_date = datetime.now()
+
+    for row in range(5, last_filled_activity_task_row + 1):
+        end_date_cell = ws_project_schedule.cell(row=row, column=5).value
+        status_cell = ws_project_schedule.cell(row=row, column=6)
+        
+        if end_date_cell:
+            end_date = datetime.strptime(end_date_cell, "%d-%b-%Y")
+            if end_date < present_date:
+                status_cell.value = 'Delayed'
+
+
+    # Apply the data validation to the "Status" column only for filled rows
+    status_validation = DataValidation(type="list", formula1='"Ongoing,At Risk,Delayed"', allow_blank=True)
+    status_validation.error = 'Invalid entry, please select from the list'
+    status_validation.errorTitle = 'Invalid Entry'
+
+    status_col_index = 6  # Assuming the "Status" column is at index 6
     for row in range(5, last_filled_activity_task_row + 1):  # Apply up to the last filled row
-        cell = ws_project_schedule.cell(row=row, column=status_col_index, value='Ongoing')
+        cell = ws_project_schedule.cell(row=row, column=status_col_index)
+        if not cell.value:
+            cell.value = 'Ongoing'
         status_validation.add(cell)
 
-        # Apply initial conditional formatting
-        if cell.value == 'Ongoing':
-            cell.fill = PatternFill(start_color="32CD32", end_color="32CD32", fill_type="solid")
-            cell.font = Font(color="000000", bold=True)  # Black text for Ongoing
-        elif cell.value == 'At Risk':
-            cell.fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
-            cell.font = Font(color="000000", bold=True)  # Black text for At Risk
-        elif cell.value == 'Delayed':
-            cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
-            cell.font = Font(color="FFFFFF", bold=True)  # White text for Delayed
-
     ws_project_schedule.add_data_validation(status_validation)
+
 
     # Add conditional formatting rules for the status column
     ws_project_schedule.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
