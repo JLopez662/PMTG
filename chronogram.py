@@ -7,6 +7,10 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.cell import MergedCell
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.formatting.rule import Rule
+from openpyxl.styles.differential import DifferentialStyle
+from openpyxl.formatting.rule import CellIsRule
 from copy import copy
 
 def is_file_open(file_path):
@@ -77,7 +81,7 @@ def validate_date(date_text):
     except ValueError:
         return False
 
-def add_task_dates(chronogram, start_date, ws, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours, row_offset=4):
+def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours, row_offset=4):
     if not start_date:
         return None
 
@@ -184,6 +188,14 @@ def add_task_dates(chronogram, start_date, ws, ws_month, year, num_weeks, task_r
                 end_date_cell = ws.cell(row=task_row_mapping[index], column=5, value=original_task_end_date.strftime("%d-%b"))
                 end_date_cell.border = thin_border
 
+            # Add task dates for Project Schedule sheet
+            if not isinstance(ws_project_schedule.cell(row=task_row_mapping[index], column=4), MergedCell):
+                start_date_cell_ps = ws_project_schedule.cell(row=task_row_mapping[index], column=4, value=original_task_start_date.strftime("%d-%b"))
+                start_date_cell_ps.border = thin_border
+            if not isinstance(ws_project_schedule.cell(row=task_row_mapping[index], column=5), MergedCell):
+                end_date_cell_ps = ws_project_schedule.cell(row=task_row_mapping[index], column=5, value=original_task_end_date.strftime("%d-%b"))
+                end_date_cell_ps.border = thin_border
+
             if milestone_name not in milestone_start_dates or original_task_start_date < milestone_start_dates[milestone_name]:
                 milestone_start_dates[milestone_name] = original_task_start_date
             if milestone_name not in milestone_end_dates or original_task_end_date > milestone_end_dates[milestone_name]:
@@ -268,6 +280,30 @@ def adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_wi
         for cell in row:
             cell.alignment = Alignment(wrap_text=True)
 
+def add_status_conditional_formatting(ws, start_row, end_row, col_index):
+    green_fill = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
+    yellow_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+    red_fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+    white_font = Font(color="FFFFFF")
+
+    ongoing_dxf = DifferentialStyle(fill=green_fill, font=white_font)
+    at_risk_dxf = DifferentialStyle(fill=yellow_fill, font=white_font)
+    delayed_dxf = DifferentialStyle(fill=red_fill, font=white_font)
+
+    ongoing_rule = Rule(type="containsText", operator="containsText", text="Ongoing", dxf=ongoing_dxf)
+    ongoing_rule.formula = ['NOT(ISERROR(SEARCH("Ongoing",' + get_column_letter(col_index) + ')))']
+
+    at_risk_rule = Rule(type="containsText", operator="containsText", text="At Risk", dxf=at_risk_dxf)
+    at_risk_rule.formula = ['NOT(ISERROR(SEARCH("At Risk",' + get_column_letter(col_index) + ')))']
+
+    delayed_rule = Rule(type="containsText", operator="containsText", text="Delayed", dxf=delayed_dxf)
+    delayed_rule.formula = ['NOT(ISERROR(SEARCH("Delayed",' + get_column_letter(col_index) + ')))']
+
+    ws.conditional_formatting.add(f"{get_column_letter(col_index)}{start_row}:{get_column_letter(col_index)}{end_row}", ongoing_rule)
+    ws.conditional_formatting.add(f"{get_column_letter(col_index)}{start_row}:{get_column_letter(col_index)}{end_row}", at_risk_rule)
+    ws.conditional_formatting.add(f"{get_column_letter(col_index)}{start_row}:{get_column_letter(col_index)}{end_row}", delayed_rule)
+
+
 def process_final_week_ranges():
     global all_week_ranges
     #print("")
@@ -350,7 +386,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         df.to_excel(backup_filename, index=False, header=False)
         print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
 
-
     for col in range(start_col_index - 1):
         df.insert(col, 'Empty{}'.format(col), [''] * df.shape[0])
     df.to_excel(filename, index=False, header=False)
@@ -367,30 +402,40 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     ws.title = "Gantt Chart (weeks)"
 
     ws_month = wb.create_sheet(title="Gantt Chart (months)")
+    ws_project_schedule = wb.create_sheet(title="Project Schedule")  # Added Project Schedule sheet
 
     format_blank_cells(ws)
     format_blank_cells(ws_month)
+    format_blank_cells(ws_project_schedule)  # Format the new sheet
 
-    headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5)]
+    headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), ("Status", 6)]
     for header, col in headers:
-        ws.merge_cells(start_row=1, start_column=col, end_row=3, end_column=col)
-        header_cell = ws.cell(row=1, column=col, value=header)
+        for sheet in [ws, ws_month]:  # Loop through only ws and ws_month sheets
+            if header == "Status":
+                continue  # Skip Status for these sheets
+            sheet.merge_cells(start_row=1, start_column=col, end_row=3, end_column=col)
+            header_cell = sheet.cell(row=1, column=col, value=header)
+            header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
+            header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            header_cell.font = Font(color="FFFFFF", bold=True)
+            header_cell.border = thin_border
+
+            for row in range(1, 4):
+                for col in range(col, col + 1):
+                    sheet.cell(row=row, column=col).border = thin_border
+
+        # Add headers only for the Project Schedule sheet
+        sheet = ws_project_schedule
+        sheet.merge_cells(start_row=1, start_column=col, end_row=3, end_column=col)
+        header_cell = sheet.cell(row=1, column=col, value=header)
         header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
         header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
         header_cell.font = Font(color="FFFFFF", bold=True)
         header_cell.border = thin_border
 
-        ws_month.merge_cells(start_row=1, start_column=col, end_row=3, end_column=col)
-        month_header_cell = ws_month.cell(row=1, column=col, value=header)
-        month_header_cell.alignment = Alignment(horizontal='center', vertical='bottom')
-        month_header_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-        month_header_cell.font = Font(color="FFFFFF", bold=True)
-        month_header_cell.border = thin_border
-
         for row in range(1, 4):
-            for col in range(col, col+1):
-                ws.cell(row=row, column=col).border = thin_border
-                ws_month.cell(row=row, column=col).border = thin_border
+            for col in range(col, col + 1):
+                sheet.cell(row=row, column=col).border = thin_border
 
     row_offset = 5
 
@@ -427,29 +472,26 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     milestone_counter = 0
     task_number = 1
+    last_filled_activity_task_row = 0  # Initialize the variable
+
     for index, row in enumerate(new_chronogram):
         excel_row = row_offset + index
 
         if set(row) == {''}:
-            ws.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}")
-            ws.merge_cells(start_row=excel_row, start_column=2, end_row=excel_row, end_column=2)
-            task_cell = ws.cell(row=excel_row, column=2)
-            task_cell.alignment = Alignment(horizontal='center', vertical='center')
-            task_cell.font = Font(color="000000", bold=True)
-            task_cell.border = thin_border
+            for sheet in [ws, ws_month, ws_project_schedule]:  # Loop through all sheets
+                sheet.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}")
+                sheet.merge_cells(start_row=excel_row, start_column=2, end_row=excel_row, end_column=2)
+                task_cell = sheet.cell(row=excel_row, column=2)
+                task_cell.alignment = Alignment(horizontal='center', vertical='center')
+                task_cell.font = Font(color="000000", bold=True)
+                task_cell.border = thin_border
 
-            ws.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter])
-            ws.merge_cells(start_row=excel_row, start_column=3, end_row=excel_row, end_column=3)
-            cell = ws.cell(row=excel_row, column=3)
-            cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.font = Font(color="000000", bold=True)
-            cell.border = thin_border
-
-            ws_month.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}").font = Font(bold=True)
-            ws_month.cell(row=excel_row, column=2).border = thin_border
-
-            ws_month.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter]).font = Font(bold=True)
-            ws_month.cell(row=excel_row, column=3).border = thin_border
+                sheet.cell(row=excel_row, column=3, value=milestoneNames[milestone_counter])
+                sheet.merge_cells(start_row=excel_row, start_column=3, end_row=excel_row, end_column=3)
+                cell = sheet.cell(row=excel_row, column=3)
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.font = Font(color="000000", bold=True)
+                cell.border = thin_border
 
             milestone_counter += 1
             task_number = 1
@@ -457,22 +499,27 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             if index in task_row_mapping:
                 task_excel_row = task_row_mapping[index]
                 task_number_label = f"{milestone_counter}.{task_number}"
-                task_cell = ws.cell(row=task_excel_row, column=2, value=task_number_label)
-                task_cell.border = thin_border
-                ws.cell(row=task_excel_row, column=3, value=new_activity_names[index])
-                ws.cell(row=task_excel_row, column=3).border = thin_border
+                for sheet in [ws, ws_project_schedule]:  # Loop through all sheets
+                    task_cell = sheet.cell(row=task_excel_row, column=2, value=task_number_label)
+                    task_cell.border = thin_border
+                    sheet.cell(row=task_excel_row, column=3, value=new_activity_names[index])
+                    sheet.cell(row=task_excel_row, column=3).border = thin_border
 
-                for col_index, value in enumerate(row, start=start_col_index):
-                    task_cell = ws.cell(row=task_excel_row, column=col_index)
-                    if value == 'X':
-                        task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
-                        task_cell.border = thin_border
+                    # Update the last filled row variable
+                    last_filled_activity_task_row = task_excel_row
+
+                    for col_index, value in enumerate(row, start=start_col_index):
+                        task_cell = sheet.cell(row=task_excel_row, column=col_index)
+                        if value == 'X':
+                            if sheet != ws_project_schedule and sheet != ws_month:  # Exclude Project Schedule
+                                task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
+                                task_cell.border = thin_border
                 task_number += 1
 
     adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_width=20)
+    adjust_column_settings(ws_project_schedule, ws_month, start_col_index, num_weeks, date_col_width=20)  # Adjust the new sheet
 
-    add_task_dates(new_chronogram, start_week, ws, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
-    
+    add_task_dates(new_chronogram, start_week, ws, ws_project_schedule, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
 
     if not start_week:
         week_labels = [f"Week {i+1}" for i in range(num_weeks)]
@@ -489,48 +536,32 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     for i, (date_range, year_of_week) in enumerate(week_dates, start=start_col_index):
         if current_year != year_of_week:
-            ws.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=i - 1)
-            primary_cell = ws.cell(row=1, column=year_start_col)
-            primary_cell.value = str(current_year)
-            primary_cell.alignment = Alignment(horizontal='left', vertical='center')
-            primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-            primary_cell.font = Font(color="FFFFFF", bold=True)
-            primary_cell.border = thin_border
+            for sheet in [ws, ws_month]:  # Loop through ws and ws_month only
+                sheet.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=i - 1)
+                primary_cell = sheet.cell(row=1, column=year_start_col)
+                primary_cell.value = str(current_year)
+                primary_cell.alignment = Alignment(horizontal='left', vertical='center')
+                primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+                primary_cell.font = Font(color="FFFFFF", bold=True)
+                primary_cell.border = thin_border
 
-            ws_month.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=i - 1)
-            month_primary_cell = ws_month.cell(row=1, column=year_start_col)
-            month_primary_cell.value = str(current_year)
-            month_primary_cell.alignment = Alignment(horizontal='left', vertical='center')
-            month_primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-            month_primary_cell.font = Font(color="FFFFFF", bold=True)
-            month_primary_cell.border = thin_border
-
-            for col in range(year_start_col, i):
-                ws.cell(row=1, column=col).border = thin_border
-                ws_month.cell(row=1, column=col).border = thin_border
+                for col in range(year_start_col, i):
+                    sheet.cell(row=1, column=col).border = thin_border
 
             current_year = year_of_week
             year_start_col = i
 
-    ws.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=len(week_dates) + start_col_index - 1)
-    primary_cell = ws.cell(row=1, column=year_start_col)
-    primary_cell.value = str(current_year)
-    primary_cell.alignment = Alignment(horizontal='left', vertical='center')
-    primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-    primary_cell.font = Font(color="FFFFFF", bold=True)
-    primary_cell.border = thin_border
+    for sheet in [ws, ws_month]:  # Loop through ws and ws_month only
+        sheet.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=len(week_dates) + start_col_index - 1)
+        primary_cell = sheet.cell(row=1, column=year_start_col)
+        primary_cell.value = str(current_year)
+        primary_cell.alignment = Alignment(horizontal='left', vertical='center')
+        primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+        primary_cell.font = Font(color="FFFFFF", bold=True)
+        primary_cell.border = thin_border
 
-    ws_month.merge_cells(start_row=1, start_column=year_start_col, end_row=1, end_column=len(week_dates) + start_col_index - 1)
-    month_primary_cell = ws_month.cell(row=1, column=year_start_col)
-    month_primary_cell.value = str(current_year)
-    month_primary_cell.alignment = Alignment(horizontal='left', vertical='center')
-    month_primary_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-    month_primary_cell.font = Font(color="FFFFFF", bold=True)
-    month_primary_cell.border = thin_border
-
-    for col in range(year_start_col, len(week_dates) + start_col_index):
-        ws.cell(row=1, column=col).border = thin_border
-        ws_month.cell(row=1, column=col).border = thin_border
+        for col in range(year_start_col, len(week_dates) + start_col_index):
+            sheet.cell(row=1, column=col).border = thin_border
 
     row_offset = 2
     months = {}
@@ -562,19 +593,13 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             if i < actual_weeks_with_tasks:
                 months[month_name]['end'] = i
 
-        week_cell = ws.cell(row=row_offset + 1, column=i)
-        week_cell.value = date_range
-        week_cell.alignment = Alignment(horizontal='center')
-        week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-        week_cell.font = Font(color="FFFFFF")
-        week_cell.border = thin_border
-
-        month_week_cell = ws_month.cell(row=row_offset + 1, column=i)
-        month_week_cell.value = date_range
-        month_week_cell.alignment = Alignment(horizontal='center')
-        month_week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-        month_week_cell.font = Font(color="FFFFFF")
-        month_week_cell.border = thin_border
+        for sheet in [ws, ws_month]:  # Loop through ws and ws_month only
+            week_cell = sheet.cell(row=row_offset + 1, column=i)
+            week_cell.value = date_range
+            week_cell.alignment = Alignment(horizontal='center')
+            week_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+            week_cell.font = Font(color="FFFFFF")
+            week_cell.border = thin_border
 
     if not start_week:
         for month_name, month_range in months.items():
@@ -587,38 +612,63 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     for month_name, month_range in months.items():
         if month_range['start'] <= month_range['end']:
-            ws.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
-            month_cell = ws.cell(row=row_offset, column=month_range['start'])
-            month_cell.value = month_name
-            month_cell.alignment = Alignment(horizontal='center')
-            month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-            month_cell.font = Font(color="FFFFFF")
-            for col in range(month_range['start'], month_range['end'] + 1):
-                ws.cell(row=row_offset, column=col).border = thin_border
-
-            ws_month.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
-            month_month_cell = ws_month.cell(row=row_offset, column=month_range['start'])
-            month_month_cell.value = month_name
-            month_month_cell.alignment = Alignment(horizontal='center')
-            month_month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
-            month_month_cell.font = Font(color="FFFFFF")
-            for col in range(month_range['start'], month_range['end'] + 1):
-                ws_month.cell(row=row_offset, column=col).border = thin_border
+            for sheet in [ws, ws_month]:  # Loop through ws and ws_month only
+                sheet.merge_cells(start_row=row_offset, start_column=month_range['start'], end_row=row_offset, end_column=month_range['end'])
+                month_cell = sheet.cell(row=row_offset, column=month_range['start'])
+                month_cell.value = month_name
+                month_cell.alignment = Alignment(horizontal='center')
+                month_cell.fill = PatternFill(start_color="0070C0", end_color="0070C0", fill_type="solid")
+                month_cell.font = Font(color="FFFFFF")
+                for col in range(month_range['start'], month_range['end'] + 1):
+                    sheet.cell(row=row_offset, column=col).border = thin_border
 
     for milestone_name, milestone_row in milestone_row_mapping.items():
         milestone_start_date = ws.cell(row=milestone_row, column=4).value
         milestone_end_date = ws.cell(row=milestone_row, column=5).value
 
-        ws_month.cell(row=milestone_row, column=4, value=milestone_start_date).font = Font(bold=True)
-        ws_month.cell(row=milestone_row, column=4).border = thin_border
+        for sheet in [ws_month, ws_project_schedule]:  # Loop through both sheets
+            sheet.cell(row=milestone_row, column=4, value=milestone_start_date).font = Font(bold=True)
+            sheet.cell(row=milestone_row, column=4).border = thin_border
 
-        ws_month.cell(row=milestone_row, column=5, value=milestone_end_date).font = Font(bold=True)
-        ws_month.cell(row=milestone_row, column=5).border = thin_border
+            sheet.cell(row=milestone_row, column=5, value=milestone_end_date).font = Font(bold=True)
+            sheet.cell(row=milestone_row, column=5).border = thin_border
 
         for col in range(start_col_index, start_col_index + num_weeks):
             if ws.cell(row=milestone_row, column=col).fill.start_color.index == "32a852":
-                ws_month.cell(row=milestone_row, column=col).fill = PatternFill(start_color="32a852", end_color="32a852", fill_type="solid")
-                ws_month.cell(row=milestone_row, column=col).border = thin_border
+                for sheet in [ws_month, ws_project_schedule]:  # Loop through both sheets
+                    sheet.cell(row=milestone_row, column=col).fill = PatternFill(start_color="32a852", end_color="32a852", fill_type="solid")
+                    sheet.cell(row=milestone_row, column=col).border = thin_border
+
+    # Apply the data validation to the "Status" column only for filled rows
+    status_validation = DataValidation(type="list", formula1='"Ongoing,At Risk,Delayed"', allow_blank=True)
+    status_validation.error = 'Invalid entry, please select from the list'
+    status_validation.errorTitle = 'Invalid Entry'
+
+    status_col_index = 6  # Assuming the "Status" column is at index 6
+    for row in range(5, last_filled_activity_task_row + 1):  # Apply up to the last filled row
+        cell = ws_project_schedule.cell(row=row, column=status_col_index, value='Ongoing')
+        status_validation.add(cell)
+
+        # Apply initial conditional formatting
+        if cell.value == 'Ongoing':
+            cell.fill = PatternFill(start_color="32CD32", end_color="32CD32", fill_type="solid")
+            cell.font = Font(color="000000", bold=True)  # Black text for Ongoing
+        elif cell.value == 'At Risk':
+            cell.fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+            cell.font = Font(color="000000", bold=True)  # Black text for At Risk
+        elif cell.value == 'Delayed':
+            cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+            cell.font = Font(color="FFFFFF", bold=True)  # White text for Delayed
+
+    ws_project_schedule.add_data_validation(status_validation)
+
+    # Add conditional formatting rules for the status column
+    ws_project_schedule.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
+        CellIsRule(operator='equal', formula=['"Ongoing"'], fill=PatternFill(start_color="32CD32", end_color="32CD32", fill_type="solid"), font=Font(color="000000", bold=True)))  # Black text
+    ws_project_schedule.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
+        CellIsRule(operator='equal', formula=['"At Risk"'], fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"), font=Font(color="000000", bold=True)))  # Black text
+    ws_project_schedule.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
+        CellIsRule(operator='equal', formula=['"Delayed"'], fill=PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid"), font=Font(color="FFFFFF", bold=True)))  # White text
 
     # Get the current working directory
     current_directory = os.getcwd()
@@ -638,6 +688,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         df.to_csv(f"chronogram_{timestamp}.csv", index=False)
         print("The excel file has been generated in the directory:", current_directory, "\n")
         print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
+
+
 
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year):\nInput: ").strip()
 year = int(yearInput) if yearInput else datetime.now().year
