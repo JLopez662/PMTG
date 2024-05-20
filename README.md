@@ -6,7 +6,7 @@ Generates a visual chronogram and a project schedule in Excel, mapping out Miles
 
 ## Purpose
 
-The Project Management Excel Tools (PMXT) serves as an automated solution for generating detailed chronograms and project schedule directly in Excel, ideal for project managers and teams.
+The Project Management Excel Tools (PMXT) serves as an automated solution for generating detailed gantt charts and project schedule directly in Excel, ideal for project managers and teams.
 
 It simplifies the grouping of tasks throughout milestones on workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
 
