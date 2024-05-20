@@ -58,7 +58,7 @@ It simplifies the grouping of tasks throughout milestones on workweeks into simp
 - `chronogram.csv: A CSV file with the data used to generate the chronogram.`
 
 6. **Open and view the Chronogram**
-  Open the chronogram.xlsx file in Excel to view your visual chronogram with two sheets, Weekly and Monthly Gantt Chart.
+  Open the chronogram.xlsx file in Excel to view your visual chronogram with three sheets, Gantt Chart Weekly, Gantt ChartMonthly, and Project Schedule.
   - 
       ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
 
