@@ -334,7 +334,7 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
 
     return week_dates
 
-def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row):
+def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row, row_checked):
     present_date = datetime.now()
 
     # Update the status of each task to 'Delayed' if its end date is past the current date
@@ -363,7 +363,10 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
         
         # Calculate the end row for the current milestone
         milestone_end_row = next((row for row in range(milestone_row + 1, last_filled_activity_task_row + 1)
-                                  if ws_project_schedule.cell(row=row, column=2).value is None), last_filled_activity_task_row + 1)
+                                if ws_project_schedule.cell(row=row, column=2).value and
+                                   "Task" in ws_project_schedule.cell(row=row, column=2).value and
+                                   ws_project_schedule.cell(row=row, column=2).value.split('.')[0] != str(list(milestone_row_mapping.keys()).index(milestone_name) + 1)), 
+                                last_filled_activity_task_row + 1)
 
         # Count the number of delayed and total tasks for the current milestone
         for row in range(milestone_row + 1, milestone_end_row):
@@ -373,13 +376,17 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
                 if status_cell.value == 'Delayed':
                     delayed_tasks += 1
 
-                # Determine the milestone status
-                if delayed_tasks == total_tasks and total_tasks > 0:
-                    milestone_status = 'Delayed'
-                elif delayed_tasks > 0:
-                    milestone_status = 'At Risk'
-                else:
-                    milestone_status = 'Ongoing'
+        #print("")
+        #print(f"Milestone: {milestone_name} - Delayed Tasks: {delayed_tasks}, Total Tasks: {total_tasks}")
+        #print("")
+
+        # Determine the milestone status
+        if delayed_tasks == total_tasks and delayed_tasks > 0:
+            milestone_status = 'Delayed'
+        elif delayed_tasks > 0:
+            milestone_status = 'At Risk'
+        else:
+            milestone_status = 'Ongoing'
 
         # Update the milestone status cell
         milestone_status_cell = ws_project_schedule.cell(row=milestone_row, column=6, value=milestone_status)
@@ -512,6 +519,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     milestone_counter = 0
     task_number = 1
     last_filled_activity_task_row = 0  # Initialize the variable
+    row_checked = 0
 
     for index, row in enumerate(new_chronogram):
         excel_row = row_offset + index
@@ -554,6 +562,10 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                                 task_cell.fill = PatternFill(start_color="FFA500", end_color="FFA500", fill_type="solid")
                                 task_cell.border = thin_border
                 task_number += 1
+
+                # Ensure row_checked is set only for the current milestone
+                if task_milestone_mapping[index] == milestoneNames[milestone_counter - 1]:
+                    row_checked = task_number - 1
 
     adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_width=20)
     adjust_column_settings(ws_project_schedule, ws_month, start_col_index, num_weeks, date_col_width=20)  # Adjust the new sheet
@@ -720,7 +732,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
 
     # Update milestone status
-    update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row)
+    update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row, row_checked)
 
     # Add conditional formatting rules for the status column
     ws_project_schedule.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
@@ -748,6 +760,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         df.to_csv(f"chronogram_{timestamp}.csv", index=False)
         print("The excel file has been generated in the directory:", current_directory, "\n")
         print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
+
 
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year):\nInput: ").strip()
 year = int(yearInput) if yearInput else datetime.now().year
@@ -790,7 +803,7 @@ for index, milestone in enumerate(milestoneNames):
 
     print()  
 
-    print()  
+    #print()  
 
     taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values):\nInput: ")
     while not taskHoursInput or not all(re.match(r'^\d+(\.\d+)?$', x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()):
