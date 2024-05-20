@@ -86,4 +86,4 @@ You can install these libraries using pip with the following command:
 - `pip install pandas`
 - `pip install openpyxl`
 - `pip install re`
-- - `pip install os`
+- `pip install os`
