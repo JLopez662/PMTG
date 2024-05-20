@@ -337,6 +337,7 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
 def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row):
     present_date = datetime.now()
 
+    # Update the status of each task to 'Delayed' if its end date is past the current date
     for row in range(5, last_filled_activity_task_row + 1):
         end_date_cell = ws_project_schedule.cell(row=row, column=5).value
         status_cell = ws_project_schedule.cell(row=row, column=6)
@@ -345,6 +346,8 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
             end_date = datetime.strptime(end_date_cell, "%d-%b-%Y")
             if end_date < present_date:
                 status_cell.value = 'Delayed'
+            else:
+                status_cell.value = 'Ongoing'
 
     thin_border = Border(
         left=Side(style='thin'),
@@ -353,17 +356,36 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
         bottom=Side(style='thin')
     )
 
+    # Update the status of each milestone based on the status of its tasks
     for milestone_name, milestone_row in milestone_row_mapping.items():
-        milestone_status = 'Ongoing'
-        for row in range(milestone_row, last_filled_activity_task_row + 1):
-            status_cell = ws_project_schedule.cell(row=row, column=6)
-            if status_cell.value == 'Delayed':
-                milestone_status = 'At Risk'
-                break
+        delayed_tasks = 0
+        total_tasks = 0
+        
+        # Calculate the end row for the current milestone
+        milestone_end_row = next((row for row in range(milestone_row + 1, last_filled_activity_task_row + 1)
+                                  if ws_project_schedule.cell(row=row, column=2).value is None), last_filled_activity_task_row + 1)
 
+        # Count the number of delayed and total tasks for the current milestone
+        for row in range(milestone_row + 1, milestone_end_row):
+            if ws_project_schedule.cell(row=row, column=2).value:  # Check if it's a task row
+                total_tasks += 1
+                status_cell = ws_project_schedule.cell(row=row, column=6)
+                if status_cell.value == 'Delayed':
+                    delayed_tasks += 1
+
+                # Determine the milestone status
+                if delayed_tasks == total_tasks and total_tasks > 0:
+                    milestone_status = 'Delayed'
+                elif delayed_tasks > 0:
+                    milestone_status = 'At Risk'
+                else:
+                    milestone_status = 'Ongoing'
+
+        # Update the milestone status cell
         milestone_status_cell = ws_project_schedule.cell(row=milestone_row, column=6, value=milestone_status)
         milestone_status_cell.border = thin_border  # Add border to milestone status cell
-        # Apply initial conditional formatting
+
+        # Apply conditional formatting
         if milestone_status_cell.value == 'Ongoing':
             milestone_status_cell.fill = PatternFill(start_color="32CD32", end_color="32CD32", fill_type="solid")
             milestone_status_cell.font = Font(color="000000", bold=True)  # Black text for Ongoing
