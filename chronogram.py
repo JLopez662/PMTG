@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import re
-import time 
+import time
 from datetime import timedelta, datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -228,7 +228,6 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
 
     return None
 
-
 def calculate_total_weeks(chronogram):
     max_length = max(len(row) for row in chronogram if set(row) != {''})
     return max_length
@@ -282,10 +281,8 @@ def add_status_conditional_formatting(ws, start_row, end_row, col_index):
     ws.conditional_formatting.add(f"{get_column_letter(col_index)}{start_row}:{get_column_letter(col_index)}{end_row}", at_risk_rule)
     ws.conditional_formatting.add(f"{get_column_letter(col_index)}{start_row}:{get_column_letter(col_index)}{end_row}", delayed_rule)
 
-
 def process_final_week_ranges():
     global all_week_ranges
-    #print("")
     return all_week_ranges
 
 current_milestone = None
@@ -336,6 +333,47 @@ def get_week_dates(start_date, num_weeks, year, milestone_name=None, last_end_da
         process_final_week_ranges()
 
     return week_dates
+
+def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row):
+    present_date = datetime.now()
+
+    for row in range(5, last_filled_activity_task_row + 1):
+        end_date_cell = ws_project_schedule.cell(row=row, column=5).value
+        status_cell = ws_project_schedule.cell(row=row, column=6)
+        
+        if end_date_cell:
+            end_date = datetime.strptime(end_date_cell, "%d-%b-%Y")
+            if end_date < present_date:
+                status_cell.value = 'Delayed'
+
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    for milestone_name, milestone_row in milestone_row_mapping.items():
+        milestone_status = 'Ongoing'
+        for row in range(milestone_row, last_filled_activity_task_row + 1):
+            status_cell = ws_project_schedule.cell(row=row, column=6)
+            if status_cell.value == 'Delayed':
+                milestone_status = 'At Risk'
+                break
+
+        milestone_status_cell = ws_project_schedule.cell(row=milestone_row, column=6, value=milestone_status)
+        milestone_status_cell.border = thin_border  # Add border to milestone status cell
+        # Apply initial conditional formatting
+        if milestone_status_cell.value == 'Ongoing':
+            milestone_status_cell.fill = PatternFill(start_color="32CD32", end_color="32CD32", fill_type="solid")
+            milestone_status_cell.font = Font(color="000000", bold=True)  # Black text for Ongoing
+        elif milestone_status_cell.value == 'At Risk':
+            milestone_status_cell.fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+            milestone_status_cell.font = Font(color="000000", bold=True)  # Black text for At Risk
+        elif milestone_status_cell.value == 'Delayed':
+            milestone_status_cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+            milestone_status_cell.font = Font(color="FFFFFF", bold=True)  # White text for Delayed
+
 
 def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, filename="chronogram.xlsx"):
     start_col_index = 6
@@ -636,21 +674,31 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             if end_date < present_date:
                 status_cell.value = 'Delayed'
 
-
     # Apply the data validation to the "Status" column only for filled rows
     status_validation = DataValidation(type="list", formula1='"Ongoing,At Risk,Delayed"', allow_blank=True)
     status_validation.error = 'Invalid entry, please select from the list'
     status_validation.errorTitle = 'Invalid Entry'
+
+    thin_border = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
 
     status_col_index = 6  # Assuming the "Status" column is at index 6
     for row in range(5, last_filled_activity_task_row + 1):  # Apply up to the last filled row
         cell = ws_project_schedule.cell(row=row, column=status_col_index)
         if not cell.value:
             cell.value = 'Ongoing'
+        cell.border = thin_border  # Add border to the cell
         status_validation.add(cell)
 
     ws_project_schedule.add_data_validation(status_validation)
 
+
+    # Update milestone status
+    update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row)
 
     # Add conditional formatting rules for the status column
     ws_project_schedule.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
@@ -678,8 +726,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         df.to_csv(f"chronogram_{timestamp}.csv", index=False)
         print("The excel file has been generated in the directory:", current_directory, "\n")
         print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
-
-
 
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year):\nInput: ").strip()
 year = int(yearInput) if yearInput else datetime.now().year
@@ -725,8 +771,8 @@ for index, milestone in enumerate(milestoneNames):
     print()  
 
     taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values):\nInput: ")
-    while not taskHoursInput or not all(x.strip().isdigit() for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()):
-        print("Input format is incorrect. Please enter only numbers separated by commas or spaces.")
+    while not taskHoursInput or not all(re.match(r'^\d+(\.\d+)?$', x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()):
+        print("Input format is incorrect. Please enter only numbers (integers or floats) separated by commas or spaces.")
         taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values):\nInput: ")
 
     hours = [float(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
@@ -734,7 +780,7 @@ for index, milestone in enumerate(milestoneNames):
     milestoneActivityNames = [f"{task}" for task in tasks]
     activityNames.extend(milestoneActivityNames)
     milestones_tasks.append((milestone, hours))
-    
+
     task_hours.extend(hours)
 
     if index == len(milestoneNames) - 1:
