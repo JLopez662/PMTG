@@ -2,7 +2,8 @@
 
 Generates a visual chronogram and a project schedule in Excel, mapping out Milestones and task with hours across workweeks to aid in project management.
 - ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
-- ![Chronogram Monthly](./Project_Schedule.png)
+- ![Project Schedule](./Project_Schedule.png)
+- ![Raci Table](./RACI_Table.png)
 
 ## Purpose
 
@@ -64,7 +65,9 @@ It simplifies the grouping of tasks throughout milestones on workweeks into simp
 
       ![Chronogram Monthly](./Gantt_Chart_Months.png)
 
-      ![Chronogram Monthly](./Project_Schedule.png)
+      ![Project Schedule](./Project_Schedule.png)
+
+      ![Raci Table](./RACI_Table.png)
 
       ![Chronogram Inputs](./Chronogram_Input_Tasks.png)
 
