@@ -1,13 +1,13 @@
 # Project Management Excel Tools (PMXT) 
 
-Generates a visual chronogram and a project schedule in Excel, mapping out Milestones and task with hours across workweeks to aid in project management.
+Generates a visual chronogram, project schedule and RACI Table automatically in Excel, mapping out Milestones and task with hours across workweeks to aid in project management.
 - ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
 - ![Project Schedule](./Project_Schedule.png)
 - ![Raci Table](./RACI_Table.png)
 
 ## Purpose
 
-The Project Management Excel Tools (PMXT) serves as an automated solution for generating detailed gantt charts and project schedule directly in Excel, ideal for project managers and teams.
+The Project Management Excel Tools (PMXT) serves as an automated solution for generating detailed gantt charts, project schedule and raci table in Excel files, ideal for project managers and teams.
 
 It simplifies the grouping of tasks throughout milestones on workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
 
@@ -59,7 +59,7 @@ It simplifies the grouping of tasks throughout milestones on workweeks into simp
 - `chronogram.csv: A CSV file with the data used to generate the chronogram.`
 
 6. **Open and view the Chronogram**
-  Open the chronogram.xlsx file in Excel to view your visual chronogram with three sheets, Gantt Chart Weekly, Gantt ChartMonthly, and Project Schedule.
+  Open the chronogram.xlsx file in Excel to view your visual chronogram with three sheets, Gantt Chart Weekly, Gantt ChartMonthly Project Schedule and RACI Table.
   - 
       ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
 
