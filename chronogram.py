@@ -10,7 +10,7 @@ from openpyxl.cell import MergedCell
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.formatting.rule import Rule
 from openpyxl.styles.differential import DifferentialStyle
-from openpyxl.formatting.rule import CellIsRule
+from openpyxl.formatting.rule import CellIsRule, DataBar, IconSet, FormatObject, Rule, ColorScaleRule
 from copy import copy
 
 def is_file_open(file_path):
@@ -188,7 +188,7 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
             if milestone_name not in milestone_end_dates or original_task_end_date > milestone_end_dates[milestone_name]:
                 milestone_end_dates[milestone_name] = original_task_end_date
 
-            for i, (date_range, date_year) in enumerate(week_dates, start=6):
+            for i, (date_range, date_year) in enumerate(week_dates, start=7):
                 start_week_str, end_week_str = date_range.split(' - ')
                 start_week = datetime.strptime(f"{start_week_str}/{date_year}", "%d/%b/%Y")
                 end_week = datetime.strptime(f"{end_week_str}/{date_year}", "%d/%b/%Y")
@@ -215,7 +215,7 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
         ws_month.cell(row=milestone_row, column=4, value=start_date.strftime("%d-%b-%Y")).border = thin_border
         ws_month.cell(row=milestone_row, column=5, value=end_date.strftime("%d-%b-%Y")).border = thin_border
 
-        for i, (date_range, date_year) in enumerate(week_dates, start=6):
+        for i, (date_range, date_year) in enumerate(week_dates, start=7):
             start_week_str, end_week_str = date_range.split(' - ')
             start_week = datetime.strptime(f"{start_week_str}/{date_year}", "%d/%b/%Y")
             end_week = datetime.strptime(f"{end_week_str}/{date_year}", "%d/%b/%Y")
@@ -225,11 +225,11 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
 
             if start_date <= end_week and end_date >= start_week:
                 milestone_cell = ws.cell(row=milestone_row, column=i)
-                milestone_cell.fill = PatternFill(start_color="32a852", end_color="32a852", fill_type="solid")
+                milestone_cell.fill = PatternFill(start_color="1FD5C4", end_color="1FD5C4", fill_type="solid")
                 milestone_cell.border = thin_border
 
                 milestone_month_cell = ws_month.cell(row=milestone_row, column=i)
-                milestone_month_cell.fill = PatternFill(start_color="32a852", end_color="32a852", fill_type="solid")
+                milestone_month_cell.fill = PatternFill(start_color="1FD5C4", end_color="1FD5C4", fill_type="solid")
                 milestone_month_cell.border = thin_border
 
     return None
@@ -244,6 +244,7 @@ def adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_wi
         'C': 30,
         'D': 12,
         'E': 12,
+        'F': 18,
     }
 
     for col, width in column_widths.items():
@@ -410,8 +411,9 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
             milestone_status_cell.font = Font(color="FFFFFF", bold=True)  # White text for Delayed
 
 
+
 def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, filename="chronogram.xlsx"):
-    start_col_index = 6
+    start_col_index = 7
     num_weeks = calculate_total_weeks(chronogram)
 
     thin_border = Border(
@@ -462,8 +464,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     format_blank_cells(ws_project_schedule)  # Format the new sheet
     format_blank_cells(ws_raci_table)  # Format the new RACI Table sheet
 
-    headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), ("Status", 6)]
-    project_schedule_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5),("Status", 6)]
+    headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), ("Priority", 6)]
+    project_schedule_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5),("Status", 6), ("Complete",7 )]
 
     raci_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), 
                     ("Product Owner", 6), ("Business Analyst", 7), ("Financial Lead", 8), ("Design Director", 9), ("CRM Lead", 10),
@@ -509,11 +511,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         for row in range(1, 4):
             for col in range(col, col + 1):
                 sheet.cell(row=row, column=col).border = thin_border
-
-
-
-        
-
 
     row_offset = 5
 
@@ -605,6 +602,36 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     add_task_dates(new_chronogram, start_week, ws, ws_project_schedule, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
     add_task_dates(new_chronogram, start_week, ws, ws_raci_table, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
+
+
+    # Define the dropdown values for the "Complete" column
+    complete_validation = DataValidation(type="list", formula1='"0%,10%,20%,25%,30%,40%,50%,60%,70%,75%,80%,90%,100%"', allow_blank=True)
+    complete_validation.error = 'Invalid entry, please select from the list'
+    complete_validation.errorTitle = 'Invalid Entry'
+
+    # Apply data validation to the "Complete" column for the task rows in the "Project Schedule" sheet
+    complete_col_index = 7  # Assuming the "Complete" column is at index 7
+    for row in range(5, last_filled_activity_task_row + 1):
+        if ws_project_schedule.cell(row=row, column=2).value and ("." in ws_project_schedule.cell(row=row, column=2).value or "Task" in ws_project_schedule.cell(row=row, column=2).value):
+            cell = ws_project_schedule.cell(row=row, column=complete_col_index)
+            cell.value = '0%'  # Set default value to "0%"
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = thin_border  # Add border to the cell
+            complete_validation.add(cell)
+            if cell.value == '0%':  # Check if the value is '0%'
+                cell.fill = PatternFill(start_color="D2DDDC", end_color="D2DDDC", fill_type="solid")  # Fill color with D2DDDC
+
+
+    color_scale_rule = ColorScaleRule(start_type='percentile', start_value=0, start_color="D2DDDC",
+                        mid_type='percentile', mid_value=50, mid_color="65DBCE",  # Optional mid-value color
+                        end_type='percentile', end_value=100, end_color="02FCE0")
+
+    # Add color scale conditional formatting to visually fill the cells partially
+    # Adjust ColorScaleRule for gradient based on cell values
+    ws_project_schedule.add_data_validation(complete_validation)
+                                
+    ws_project_schedule.conditional_formatting.add(f'{get_column_letter(complete_col_index)}5:{get_column_letter(complete_col_index)}{last_filled_activity_task_row}', color_scale_rule)
+
 
     if not start_week:
         week_labels = [f"Week {i+1}" for i in range(num_weeks)]
@@ -719,10 +746,66 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             sheet.cell(row=milestone_row, column=5).border = thin_border
 
         for col in range(start_col_index, start_col_index + num_weeks):
-            if ws.cell(row=milestone_row, column=col).fill.start_color.index == "32a852":
+            if ws.cell(row=milestone_row, column=col).fill.start_color.index == "1FD5C4":
                 for sheet in [ws_month, ws_project_schedule, ws_raci_table]:  # Loop through all sheets
-                    sheet.cell(row=milestone_row, column=col).fill = PatternFill(start_color="32a852", end_color="32a852", fill_type="solid")
+                    sheet.cell(row=milestone_row, column=col).fill = PatternFill(start_color="1FD5C4", end_color="1FD5C4", fill_type="solid")
                     sheet.cell(row=milestone_row, column=col).border = thin_border
+
+    # Add the data validation to the "Priority" column for task rows and milestone rows
+    priority_validation = DataValidation(type="list", formula1='"Low,Medium,High"', allow_blank=True)
+    priority_validation.error = 'Invalid entry, please select from the list'
+    priority_validation.errorTitle = 'Invalid Entry'
+
+    priority_col_index = 6  # Assuming the "Priority" column is at index 6
+
+    # Apply data validation to task rows and milestone rows
+    for row in range(5, last_filled_activity_task_row + 1):
+        # Apply to tasks
+        if ws.cell(row=row, column=2).value and ("." in ws.cell(row=row, column=2).value or "Task" in ws.cell(row=row, column=2).value):
+            cell = ws.cell(row=row, column=priority_col_index)
+            cell.value = 'Low'  # Set default value to "Medium"
+            cell.alignment = Alignment(horizontal='center')
+            cell.border = thin_border  # Add border to the cell
+            priority_validation.add(cell)
+
+        # Apply to milestones in the monthly sheet
+        # Apply data validation to milestone rows only
+        for row in range(5, last_filled_activity_task_row + 1):
+            # Apply to milestones in the monthly sheet
+            if ws_month.cell(row=row, column=2).value and "Task" in ws_month.cell(row=row, column=2).value:
+                cell_month = ws_month.cell(row=row, column=priority_col_index)
+                cell_month.value = 'Low'  # Set default value to "Low"
+                cell_month.alignment = Alignment(horizontal='center')
+                cell_month.border = thin_border  # Add border to the cell
+                priority_validation.add(cell_month)
+
+    ws.add_data_validation(priority_validation)
+    ws_month.add_data_validation(priority_validation)
+
+    # Add formatting rules for the Priority column
+    priority_values = ['Low', 'Medium', 'High']
+    for value in priority_values:
+        fill_color = ""
+        font_color = ""
+        if value == "Low":
+            fill_color = "32CD32"  # Green
+            font_color = "FFFFFF"  # White
+        elif value == "Medium":
+            fill_color = "FFFF00"  # Yellow
+            font_color = "000000"  # Black
+        elif value == "High":
+            fill_color= "FF0000"  # Red
+            font_color = "FFFFFF"  # White
+
+        ws.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
+            CellIsRule(operator='equal', formula=[f'"{value}"'], fill=PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid"), 
+            font=Font(color=font_color, bold=True))  # Background color with text color
+        )
+
+        ws_month.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
+            CellIsRule(operator='equal', formula=[f'"{value}"'], fill=PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid"), 
+            font=Font(color=font_color, bold=True))  # Background color with text color
+        )
 
     # Add the data validation to the "RACI Status" column only for filled rows in the RACI Table sheet
     raci_status_validation = DataValidation(type="list", formula1='"Responsible,Accountable,Consulted,Informed"', allow_blank=True)
@@ -739,23 +822,23 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         cell.border = thin_border  # Add border to the cell
         raci_status_validation.add(cell)
 
-        for col in range(raci_status_col_start_index +1, raci_status_col_end_index):
+        for col in range(raci_status_col_start_index + 1, raci_status_col_end_index):
             cell = ws_raci_table.cell(row=row, column=col)
             cell.value = "Informed"  # Set default value to "Informed"
             cell.border = thin_border  # Add border to the cell
             raci_status_validation.add(cell)
 
-        cell = ws_raci_table.cell(row=row, column=raci_status_col_start_index+2)
+        cell = ws_raci_table.cell(row=row, column=raci_status_col_start_index + 2)
         cell.value = "Consulted"  # Set default value to "Informed"
         cell.border = thin_border  # Add border to the cell
         raci_status_validation.add(cell)
 
-        cell = ws_raci_table.cell(row=row, column=raci_status_col_end_index-4)
+        cell = ws_raci_table.cell(row=row, column=raci_status_col_end_index - 4)
         cell.value = "Consulted"  # Set default value to "Informed"
         cell.border = thin_border  # Add border to the cell
         raci_status_validation.add(cell)
 
-        cell = ws_raci_table.cell(row=row, column=raci_status_col_end_index-2)
+        cell = ws_raci_table.cell(row=row, column=raci_status_col_end_index - 2)
         cell.value = "Consulted"  # Set default value to "Informed"
         cell.border = thin_border  # Add border to the cell
         raci_status_validation.add(cell)
@@ -778,8 +861,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             CellIsRule(operator='equal', formula=['"Consulted"'], fill=PatternFill(start_color="800080", end_color="800080", fill_type="solid"), font=Font(color="FFFFFF", bold=True)))  # Purple fill with white text
         ws_raci_table.conditional_formatting.add(f'{col_letter}5:{col_letter}{last_filled_activity_task_row}',
             CellIsRule(operator='equal', formula=['"Informed"'], fill=PatternFill(start_color="008000", end_color="008000", fill_type="solid"), font=Font(color="FFFFFF", bold=True)))  # Green fill with white text
-
-
 
     # Apply the data validation to the "Status" column only for filled rows
     status_validation = DataValidation(type="list", formula1='"Ongoing,At Risk,Delayed"', allow_blank=True)
@@ -827,7 +908,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     ws_project_schedule.add_data_validation(status_validation)
     #ws_raci_table.add_data_validation(status_validation)  # Apply validation to RACI Table as well
 
-
     # Update milestone status
     update_milestone_status(ws_project_schedule, milestone_row_mapping, last_filled_activity_task_row, row_checked)
     #update_milestone_status(ws_raci_table, milestone_row_mapping, last_filled_activity_task_row, row_checked)  # Update status in RACI Table as well
@@ -835,7 +915,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     # Add conditional formatting rules for the status column
     for sheet in [ws_project_schedule]:  # Apply to both sheets
         sheet.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
-            CellIsRule(operator='equal', formula=['"Ongoing"'], fill=PatternFill(start_color="32CD32", end_color="32CD32", fill_type="solid"), font=Font(color="000000", bold=True)))  # Black text
+            CellIsRule(operator='equal', formula=['"Ongoing"'], fill=PatternFill(start_color="32CD32", end_color="32CD32", fill_type="solid"), font=Font(color="FFFFFF", bold=True)))  # Black text
         sheet.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
             CellIsRule(operator='equal', formula=['"At Risk"'], fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"), font=Font(color="000000", bold=True)))  # Black text
         sheet.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
