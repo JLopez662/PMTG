@@ -650,9 +650,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                     priority_cell.border = thin_border
                     priority_validation.add(priority_cell)
                     priority_index += 1
-                else:
+                #else:
                     #print(f"Warning: Task priorities list is out of bounds at index {priority_index}")
-                    print("");
+                    #print("");
 
                 # Ensure row_checked is set only for the current milestone
                 if task_milestone_mapping[index] == milestoneNames[milestone_counter - 1]:
@@ -835,9 +835,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             if priority_index < len(task_priorities):
                 cell.value = task_priorities[priority_index]  # Assign the correct priority
                 priority_index += 1
-            else:
+            #else:
                 #print(f"Warning: Task priorities list is out of bounds at index {priority_index}")
-                print("")
+                #print("")
             cell.alignment = Alignment(horizontal='center')
             cell.border = thin_border  # Add border to the cell
             priority_validation.add(cell)
@@ -848,9 +848,9 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             if priority_index < len(task_priorities):
                 cell_month.value = task_priorities[priority_index]  # Assign the correct priority
                 priority_index += 1
-            else:
+            #else:
                 #print(f"Warning: Task priorities list is out of bounds at index {priority_index}")
-                print("")
+                #print("")
             cell_month.alignment = Alignment(horizontal='center')
             cell_month.border = thin_border  # Add border to the cell
             priority_validation.add(cell_month)
