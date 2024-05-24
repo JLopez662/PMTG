@@ -436,6 +436,22 @@ def set_milestone_priority(tasks_priorities):
         return "Medium"
     else:
         return "Low"
+    
+def get_role_names():
+    roles = ["Product Owner", "Business Analyst", "Financial Lead", "Design Director", 
+             "CRM Lead", "Head of CRM", "Senior Stakeholder*", "Senior Stakeholder**", "AGENCY"]
+    role_names = {}
+    add_names = input("Do you want to add the names for the roles in the RACI Table header? (yes or no): ").strip().lower()
+    
+    if add_names == "yes":
+        for role in roles:
+            name = input(f"Enter the name for {role}: ").strip()
+            role_names[role] = name
+    else:
+        for role in roles:
+            role_names[role] = role
+            
+    return role_names
 
 def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, task_priorities, filename="chronogram.xlsx"):
     start_col_index = 7
@@ -496,9 +512,14 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), ("Priority", 6)]
     project_schedule_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), ("Status", 6), ("Complete", 7 )]
 
+    role_names = get_role_names()
+
     raci_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), 
-                    ("Product Owner", 6), ("Business Analyst", 7), ("Financial Lead", 8), ("Design Director", 9), ("CRM Lead", 10),
-                    ("Head of CRM", 11), ("Senior Stakeholders* ", 12), ("Senior Stakeholders** ", 13), ("AGENCY ", 14)]  # Modified header for RACI Table
+                    (role_names["Product Owner"], 6), (role_names["Business Analyst"], 7), 
+                    (role_names["Financial Lead"], 8), (role_names["Design Director"], 9), 
+                    (role_names["CRM Lead"], 10), (role_names["Head of CRM"], 11), 
+                    (role_names["Senior Stakeholder*"], 12), (role_names["Senior Stakeholder**"], 13), 
+                    (role_names["AGENCY"], 14)]
 
     for header, col in headers:
         for sheet in [ws, ws_month]:  # Loop through only ws and ws_month sheets
@@ -1001,6 +1022,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         df.to_excel(filename, index=False, header=False)
         wb.save(filename)
         df.to_csv("chronogram.csv", index=False)
+        print("")
         print("The excel file has been generated in the directory:", current_directory, "\n")
         print(f"The Gantt Chart Excel file has been successfully generated as {filename}.")
     except PermissionError:
