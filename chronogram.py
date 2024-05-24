@@ -13,10 +13,6 @@ from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.formatting.rule import CellIsRule, DataBar, IconSet, FormatObject, Rule, ColorScaleRule
 from copy import copy
 
-def validate_task_priorities(priorities):
-    valid_priorities = {"low", "medium", "high"}
-    return all(priority.lower() in valid_priorities for priority in priorities)
-
 def is_file_open(file_path):
     try:
         # Try to open the file in append mode
@@ -421,7 +417,22 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
             milestone_status_cell.fill = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
             milestone_status_cell.font = Font(color="FFFFFF", bold=True)  # White text for Delayed
 
+def validate_task_priorities(priorities):
+    valid_priorities = {"low", "medium", "high"}
+    return all(priority.lower() in valid_priorities for priority in priorities)
 
+def validate_task_priorities(priorities):
+    valid_priorities = {"low", "medium", "high"}
+    return all(priority.lower() in valid_priorities for priority in priorities)
+
+# Updated portion to set milestone priorities based on task priorities
+def set_milestone_priority(tasks_priorities):
+    if "High" in tasks_priorities:
+        return "High"
+    elif "Medium" in tasks_priorities:
+        return "Medium"
+    else:
+        return "Low"
 
 def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, task_priorities, filename="chronogram.xlsx"):
     start_col_index = 7
@@ -576,10 +587,14 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     # Default priority value for milestone rows
     default_priority = 'Low'
 
+    milestone_task_priorities = {}
+
     for index, row in enumerate(new_chronogram):
         excel_row = row_offset + index
 
         if set(row) == {''}:
+            milestone_name = milestoneNames[milestone_counter]
+            milestone_task_priorities[milestone_name] = []
             for sheet in [ws, ws_month, ws_project_schedule, ws_raci_table]:  # Loop through all sheets
                 sheet.cell(row=excel_row, column=2, value=f"Task {milestone_counter + 1}")
                 sheet.merge_cells(start_row=excel_row, start_column=2, end_row=excel_row, end_column=2)
@@ -604,6 +619,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             task_number = 1
         else:
             if index in task_row_mapping:
+                milestone_name = task_milestone_mapping[index]
+                milestone_task_priorities[milestone_name].append(task_priorities[priority_index])
                 task_excel_row = task_row_mapping[index]
                 task_number_label = f"{milestone_counter}.{task_number}"
                 for sheet in [ws, ws_project_schedule, ws_raci_table]:  # Loop through all sheets
@@ -637,6 +654,15 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                 # Ensure row_checked is set only for the current milestone
                 if task_milestone_mapping[index] == milestoneNames[milestone_counter - 1]:
                     row_checked = task_number - 1
+
+    # Apply milestone priority
+    for milestone_name, priorities in milestone_task_priorities.items():
+        milestone_priority = set_milestone_priority(priorities)
+        milestone_row = milestone_row_mapping[milestone_name]
+        for sheet in [ws, ws_month, ws_project_schedule, ws_raci_table]:
+            priority_cell = sheet.cell(row=milestone_row, column=6, value=milestone_priority)
+            priority_cell.alignment = Alignment(horizontal='center')
+            priority_cell.border = thin_border
 
     # Add the data validation to the "Priority" column for task rows and milestone rows
     ws.add_data_validation(priority_validation)
@@ -1010,6 +1036,10 @@ activityNames = []
 milestones_tasks = []
 task_hours = []
 task_priorities = []
+milestone_task_priorities = {}
+
+
+
 
 for index, milestone in enumerate(milestoneNames):
     print()
