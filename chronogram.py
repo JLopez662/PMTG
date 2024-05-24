@@ -1041,7 +1041,6 @@ task_hours = []
 task_priorities = []
 milestone_task_priorities = {}
 
-
 for index, milestone in enumerate(milestoneNames):
     print()
     print(f"Adding tasks for Milestone: {milestone}")
@@ -1056,28 +1055,34 @@ for index, milestone in enumerate(milestoneNames):
         tasksInput = input(f"Enter the list of tasks for {milestone} (as comma-separated values):\nInput: ")
         tasks = [task.strip() for task in tasksInput.split(',')]
 
-    print()  
+    print()
 
     taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values):\nInput: ")
     while not taskHoursInput or not all(re.match(r'^\d+(\.\d+)?$', x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()):
+        print("")
         print("Input format is incorrect. Please enter only numbers (integers or floats) separated by commas or spaces.")
         taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values):\nInput: ")
 
     hours = [float(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
+    print("")
+
     taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+    while taskPriorityInput and not validate_task_priorities([x.strip() for x in taskPriorityInput.split(',')]):
+        print("")
+        print("Input format is incorrect. Please enter only 'Low', 'Medium', or 'High' separated by commas.\n")
+        taskPriorityInput = input(f"Add priority for each task under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+
     if not taskPriorityInput:
         priorities = set_default_priorities(tasks)
     else:
-        while not validate_task_priorities([x.strip() for x in taskPriorityInput.split(',')]):
-            print("Input format is incorrect. Please enter only 'Low', 'Medium', or 'High' separated by commas.")
-            taskPriorityInput = input(f"Add priority for each task under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
-
         priorities = [x.strip().capitalize() for x in taskPriorityInput.split(',')]
-
         while len(priorities) != len(tasks):
             print("The number of priorities must match the number of tasks.")
             taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+            if not taskPriorityInput:
+                priorities = set_default_priorities(tasks)
+                break
             priorities = [x.strip().capitalize() for x in taskPriorityInput.split(',')]
 
     milestoneActivityNames = [f"{task}" for task in tasks]
@@ -1089,6 +1094,7 @@ for index, milestone in enumerate(milestoneNames):
 
     if index == len(milestoneNames) - 1:
         last_activity = milestoneActivityNames[-1] if milestoneActivityNames else None
+
 
 print("\n") 
 
