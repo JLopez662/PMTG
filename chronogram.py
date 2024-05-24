@@ -13,6 +13,10 @@ from openpyxl.styles.differential import DifferentialStyle
 from openpyxl.formatting.rule import CellIsRule, DataBar, IconSet, FormatObject, Rule, ColorScaleRule
 from copy import copy
 
+def validate_task_priorities(priorities):
+    valid_priorities = {"low", "medium", "high"}
+    return all(priority.lower() in valid_priorities for priority in priorities)
+
 def is_file_open(file_path):
     try:
         # Try to open the file in append mode
@@ -245,6 +249,14 @@ def adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_wi
         'D': 12,
         'E': 12,
         'F': 18,
+        'G': 18,
+        'H': 16,
+        'I': 16,
+        'J': 14,
+        'K': 16,
+        'L': 18,
+        'M': 20,  
+        'N': 15,  
     }
 
     for col, width in column_widths.items():
@@ -353,8 +365,10 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
             end_date = datetime.strptime(end_date_cell, "%d-%b-%Y")
             if end_date < present_date:
                 status_cell.value = 'Delayed'
+                status_cell.alignment = Alignment(horizontal='center')  # Center align the text
             else:
                 status_cell.value = 'Ongoing'
+                status_cell.alignment = Alignment(horizontal='center')  # Center align the text
 
     thin_border = Border(
         left=Side(style='thin'),
@@ -383,10 +397,6 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
                 if status_cell.value == 'Delayed':
                     delayed_tasks += 1
 
-        #print("")
-        #print(f"Milestone: {milestone_name} - Delayed Tasks: {delayed_tasks}, Total Tasks: {total_tasks}")
-        #print("")
-
         # Determine the milestone status
         if delayed_tasks == total_tasks and delayed_tasks > 0:
             milestone_status = 'Delayed'
@@ -398,6 +408,7 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
         # Update the milestone status cell
         milestone_status_cell = ws_project_schedule.cell(row=milestone_row, column=6, value=milestone_status)
         milestone_status_cell.border = thin_border  # Add border to milestone status cell
+        milestone_status_cell.alignment = Alignment(horizontal='center')  # Center align the text
 
         # Apply conditional formatting
         if milestone_status_cell.value == 'Ongoing':
@@ -412,7 +423,7 @@ def update_milestone_status(ws_project_schedule, milestone_row_mapping, last_fil
 
 
 
-def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, filename="chronogram.xlsx"):
+def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, task_priorities, filename="chronogram.xlsx"):
     start_col_index = 7
     num_weeks = calculate_total_weeks(chronogram)
 
@@ -464,8 +475,12 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     format_blank_cells(ws_project_schedule)  # Format the new sheet
     format_blank_cells(ws_raci_table)  # Format the new RACI Table sheet
 
+    for row in ws_raci_table.iter_rows():
+        for cell in row:
+            cell.alignment = Alignment(horizontal='center')
+
     headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), ("Priority", 6)]
-    project_schedule_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5),("Status", 6), ("Complete",7 )]
+    project_schedule_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), ("Status", 6), ("Complete", 7 )]
 
     raci_headers = [("Tasks", 2), ("Activity", 3), ("Start Date", 4), ("End Date", 5), 
                     ("Product Owner", 6), ("Business Analyst", 7), ("Financial Lead", 8), ("Design Director", 9), ("CRM Lead", 10),
@@ -550,6 +565,17 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     last_filled_activity_task_row = 0  # Initialize the variable
     row_checked = 0
 
+    # Initialize priority index
+    priority_index = 0
+
+    # Add the data validation to the "Priority" column for task rows and milestone rows
+    priority_validation = DataValidation(type="list", formula1='"Low,Medium,High"', allow_blank=True)
+    priority_validation.error = 'Invalid entry, please select from the list'
+    priority_validation.errorTitle = 'Invalid Entry'
+
+    # Default priority value for milestone rows
+    default_priority = 'Low'
+
     for index, row in enumerate(new_chronogram):
         excel_row = row_offset + index
 
@@ -568,6 +594,11 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                 cell.alignment = Alignment(horizontal='center', vertical='center')
                 cell.font = Font(color="000000", bold=True)
                 cell.border = thin_border
+
+                # Set default priority for milestone rows
+                priority_cell = sheet.cell(row=excel_row, column=6, value=default_priority)
+                priority_cell.alignment = Alignment(horizontal='center')
+                priority_cell.border = thin_border
 
             milestone_counter += 1
             task_number = 1
@@ -592,9 +623,25 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                                 task_cell.border = thin_border
                 task_number += 1
 
+                # Add priority to Gantt Chart (weeks)
+                if priority_index < len(task_priorities):
+                    priority_cell = ws.cell(row=task_excel_row, column=6, value=task_priorities[priority_index])
+                    priority_cell.alignment = Alignment(horizontal='center')
+                    priority_cell.border = thin_border
+                    priority_validation.add(priority_cell)
+                    priority_index += 1
+                else:
+                    #print(f"Warning: Task priorities list is out of bounds at index {priority_index}")
+                    print("");
+
                 # Ensure row_checked is set only for the current milestone
                 if task_milestone_mapping[index] == milestoneNames[milestone_counter - 1]:
                     row_checked = task_number - 1
+
+    # Add the data validation to the "Priority" column for task rows and milestone rows
+    ws.add_data_validation(priority_validation)
+    ws_month.add_data_validation(priority_validation)
+
 
     adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_width=20)
     adjust_column_settings(ws_project_schedule, ws_month, start_col_index, num_weeks, date_col_width=20)  # Adjust the new sheet
@@ -621,7 +668,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             if cell.value == '0%':  # Check if the value is '0%'
                 cell.fill = PatternFill(start_color="D2DDDC", end_color="D2DDDC", fill_type="solid")  # Fill color with D2DDDC
 
-
     color_scale_rule = ColorScaleRule(start_type='percentile', start_value=0, start_color="D2DDDC",
                         mid_type='percentile', mid_value=50, mid_color="65DBCE",  # Optional mid-value color
                         end_type='percentile', end_value=100, end_color="02FCE0")
@@ -631,7 +677,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     ws_project_schedule.add_data_validation(complete_validation)
                                 
     ws_project_schedule.conditional_formatting.add(f'{get_column_letter(complete_col_index)}5:{get_column_letter(complete_col_index)}{last_filled_activity_task_row}', color_scale_rule)
-
 
     if not start_week:
         week_labels = [f"Week {i+1}" for i in range(num_weeks)]
@@ -751,11 +796,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
                     sheet.cell(row=milestone_row, column=col).fill = PatternFill(start_color="1FD5C4", end_color="1FD5C4", fill_type="solid")
                     sheet.cell(row=milestone_row, column=col).border = thin_border
 
-    # Add the data validation to the "Priority" column for task rows and milestone rows
-    priority_validation = DataValidation(type="list", formula1='"Low,Medium,High"', allow_blank=True)
-    priority_validation.error = 'Invalid entry, please select from the list'
-    priority_validation.errorTitle = 'Invalid Entry'
-
     priority_col_index = 6  # Assuming the "Priority" column is at index 6
 
     # Apply data validation to task rows and milestone rows
@@ -763,21 +803,30 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         # Apply to tasks
         if ws.cell(row=row, column=2).value and ("." in ws.cell(row=row, column=2).value or "Task" in ws.cell(row=row, column=2).value):
             cell = ws.cell(row=row, column=priority_col_index)
-            cell.value = 'Low'  # Set default value to "Medium"
+            if priority_index < len(task_priorities):
+                cell.value = task_priorities[priority_index]  # Assign the correct priority
+                priority_index += 1
+            else:
+                #print(f"Warning: Task priorities list is out of bounds at index {priority_index}")
+                print("")
             cell.alignment = Alignment(horizontal='center')
             cell.border = thin_border  # Add border to the cell
             priority_validation.add(cell)
 
         # Apply to milestones in the monthly sheet
-        # Apply data validation to milestone rows only
-        for row in range(5, last_filled_activity_task_row + 1):
-            # Apply to milestones in the monthly sheet
-            if ws_month.cell(row=row, column=2).value and "Task" in ws_month.cell(row=row, column=2).value:
-                cell_month = ws_month.cell(row=row, column=priority_col_index)
-                cell_month.value = 'Low'  # Set default value to "Low"
-                cell_month.alignment = Alignment(horizontal='center')
-                cell_month.border = thin_border  # Add border to the cell
-                priority_validation.add(cell_month)
+        if ws_month.cell(row=row, column=2).value and "Task" in ws_month.cell(row=row, column=2).value:
+            cell_month = ws_month.cell(row=row, column=priority_col_index)
+            if priority_index < len(task_priorities):
+                cell_month.value = task_priorities[priority_index]  # Assign the correct priority
+                priority_index += 1
+            else:
+                #print(f"Warning: Task priorities list is out of bounds at index {priority_index}")
+                print("")
+            cell_month.alignment = Alignment(horizontal='center')
+            cell_month.border = thin_border  # Add border to the cell
+            priority_validation.add(cell_month)
+
+
 
     ws.add_data_validation(priority_validation)
     ws_month.add_data_validation(priority_validation)
@@ -816,7 +865,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     raci_status_col_end_index = 14  # Ending column for RACI status
 
     for row in range(5, last_filled_activity_task_row + 1):  # Apply up to the last filled row
-
         cell = ws_raci_table.cell(row=row, column=raci_status_col_start_index)
         cell.value = "Accountable"  # Set default value to "Informed"
         cell.border = thin_border  # Add border to the cell
@@ -885,11 +933,6 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     status_validation.error = 'Invalid entry, please select from the list'
     status_validation.errorTitle = 'Invalid Entry'
 
-    # Add the data validation to the "RACI Status" column only for filled rows in the RACI Table sheet
-    raci_status_validation = DataValidation(type="list", formula1='"Responsible,Accountable,Consulted,Informed"', allow_blank=True)
-    raci_status_validation.error = 'Invalid entry, please select from the list'
-    raci_status_validation.errorTitle = 'Invalid Entry'
-
     thin_border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -920,6 +963,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
             CellIsRule(operator='equal', formula=['"At Risk"'], fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"), font=Font(color="000000", bold=True)))  # Black text
         sheet.conditional_formatting.add(f'F5:F{last_filled_activity_task_row}',
             CellIsRule(operator='equal', formula=['"Delayed"'], fill=PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid"), font=Font(color="FFFFFF", bold=True)))  # White text
+
 
     # Get the current working directory
     current_directory = os.getcwd()
@@ -965,6 +1009,7 @@ print()
 activityNames = []
 milestones_tasks = []
 task_hours = []
+task_priorities = []
 
 for index, milestone in enumerate(milestoneNames):
     print()
@@ -982,8 +1027,6 @@ for index, milestone in enumerate(milestoneNames):
 
     print()  
 
-    #print()  
-
     taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values):\nInput: ")
     while not taskHoursInput or not all(re.match(r'^\d+(\.\d+)?$', x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()):
         print("Input format is incorrect. Please enter only numbers (integers or floats) separated by commas or spaces.")
@@ -991,16 +1034,31 @@ for index, milestone in enumerate(milestoneNames):
 
     hours = [float(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
+    taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+    while not taskPriorityInput or not validate_task_priorities([x.strip() for x in taskPriorityInput.split(',')]):
+        print("Input format is incorrect. Please enter only 'Low', 'Medium', or 'High' separated by commas.")
+        taskPriorityInput = input(f"Add priority for each task under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+
+    priorities = [x.strip().capitalize() for x in taskPriorityInput.split(',')]
+
+    while len(priorities) != len(tasks):
+        print("The number of priorities must match the number of tasks.")
+        taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+        priorities = [x.strip().capitalize() for x in taskPriorityInput.split(',')]
+
+
     milestoneActivityNames = [f"{task}" for task in tasks]
     activityNames.extend(milestoneActivityNames)
     milestones_tasks.append((milestone, hours))
 
     task_hours.extend(hours)
+    task_priorities.extend(priorities)
 
     if index == len(milestoneNames) - 1:
         last_activity = milestoneActivityNames[-1] if milestoneActivityNames else None
 
+
 print("\n") 
 
 chronogram = allocateTasksToWeeks(milestones_tasks)
-chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, task_hours, "chronogram.xlsx")
+chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, task_hours, task_priorities, "chronogram.xlsx")
