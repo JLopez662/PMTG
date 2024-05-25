@@ -2,8 +2,12 @@
 
 Generates automatically Gantt Charts, Project Schedule and RACI Table sheets in Excel, from a simple input, mapping out Milestones that includes Tasks with Hours across Work Weeks, ideal for Project Management.
 
-- ![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
-- ![Generated RACI Table and Project Schedule](./RACI_Schedule_Gif.gif)
+   **Generated Gantt Charts:** 
+   - ![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
+
+
+   **Generated Project Schedule and RACI Table:** 
+   - ![Generated RACI Table and Project Schedule](./RACI_Schedule_Gif.gif)
 
 ## Purpose
 
