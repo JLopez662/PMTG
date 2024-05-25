@@ -14,7 +14,7 @@ It simplifies the grouping of tasks throughout milestones on workweeks into simp
 ## Usage Instructions
 
 1. **Prepare the Scripts**  
-   Ensure that `chronogram.py` and `chronogram.sh` are both located in the same directory.
+   Ensure that `chronogram.py` and `chronogram.sh` filed are both located in the same directory.
 
 2. **Set Script Permissions**  
    Open a terminal and navigate to the directory containing the scripts. Give executable permissions to the shell script using the command:
@@ -37,21 +37,26 @@ It simplifies the grouping of tasks throughout milestones on workweeks into simp
 
       - Example: `05/01`
 
-  4.3 **List of Milestones:**
+4.3 **Priorities for Tasks:**
+Use Yes or No option if you would like to enable Priorities for each Task. 
+
+  4.4 **List of Milestones:**
    Enter the list of milestones as comma-separated values.
 
       - Example: `Requirements Gathering, Design, Development, Testing, Deployment, Maintenance`
 
-   4.4 **Tasks for Each Milestone:**
+   4.5 **Tasks for Each Milestone:**
    For each milestone, enter the list of tasks as comma-separated values.
 
       - Example for "Requirements Gathering": `Initial Meeting, Stakeholder Interviews, Requirements Documentation`
 
-  4.5 **List of Hours for Tasks:**
+  4.6 **List of Hours for Tasks:**
    For each milestone, enter the hours for each task as comma-separated values.
 
       - Example for "Requirements Gathering" tasks: `10, 15, 20`
 
+4.7 **List of Priorities for Tasks:**
+If you enabled Priorities, then for each milestone, enter priorities for each task as comma-separated values, using the options: Low, Medium, High.
   
 5. **Access the Chronogram**
    After providing the input, the script will generate two files in the same directory:
