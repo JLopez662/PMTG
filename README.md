@@ -1,6 +1,7 @@
 # Project Management Excel Tools (PMXT) 
 
-Generates automatically a visual chronogram, project schedule and RACI Table automatically in Excel, mapping out Milestones and task with hours across workweeks to aid in project management.
+Generates automatically a Gantt Chart, Project Schedule and RACI Table sheets automatically in Excel, mapping out Milestones including Task with Hours, across Work Weeks to aid in Project Management.
+
 - ![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
 - ![Generated Project Schedule](./Project_Schedule.png)
 - ![Generated Raci Table](./RACI_Table.png)
@@ -51,7 +52,7 @@ Use Yes or No option if you would like to enable Priorities for each Task.
       - Example for "Requirements Gathering": `Initial Meeting, Stakeholder Interviews, Requirements Documentation`
 
   4.6 **List of Hours for Tasks:**
-   For each milestone, enter the hours for each task as comma-separated values.
+   For each milestone, enter the hours for each task as comma-separated values, using integers or floats.
 
       - Example for "Requirements Gathering" tasks: `10, 15, 20`
 
