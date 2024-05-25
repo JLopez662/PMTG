@@ -69,7 +69,85 @@ It simplifies the grouping of tasks throughout milestones on workweeks into simp
 
       ![Raci Table](./RACI_Table.png)
 
-      ![Chronogram Inputs](./Chronogram_Input_Tasks.png)
+## Sample Input
+
+```bash
+motreto@Jorge:/mnt/c/Users/execu/ScheduleChronogram$ 
+./chronogram.sh
+Add the year for the Gantt Chart (leave empty if using current year):
+Input: 2024
+
+Add the starting week (MM/DD) (leave empty if not):
+Input: 05/10
+
+Do you want to add priorities for the tasks? (yes or no): Yes
+
+Enter the list of milestones (as comma-separated values), or leave empty:
+Input: Requirements Gathering, Design, Development, Testing, Deployment, Maintenance 
+
+
+Adding tasks for Milestone: Requirements Gathering
+Enter the list of tasks for Requirements Gathering (as comma-separated values):
+Input: Initial Meeting, Stakeholder Interviews, Requirements Documentation 
+
+Enter the hours for tasks under Requirements Gathering (as comma-separated values):
+Input: 10 15 20 
+
+Enter the priority for tasks under Requirements Gathering (Low, Medium, High) (as comma-separated values):
+Input: Medium, Low, Low 
+
+Adding tasks for Milestone: Design
+Enter the list of tasks for Design (as comma-separated values):
+Input: System Architecture Design, Database Schema Design, UI/UX Design 
+
+Enter the hours for tasks under Design (as comma-separated values):
+Input: 30 20 25 
+
+Enter the priority for tasks under Design (Low, Medium, High) (as comma-separated values):
+Input: Low, Low, Low 
+
+Adding tasks for Milestone: Development
+Enter the list of tasks for Development (as comma-separated values):
+Input: Frontend Development, Backend Development, Integration 
+
+Enter the hours for tasks under Development (as comma-separated values):
+Input: 40 50 30 
+
+Enter the priority for tasks under Development (Low, Medium, High) (as comma-separated values):
+Input: Medium, Medium, Medium 
+
+Adding tasks for Milestone: Deployment
+Enter the list of tasks for Deployment (as comma-separated values):
+Input: Prepare Deployment Environment, Deployment, Post-Deployment Verification
+
+Enter the hours for tasks under Deployment (as comma-separated values):
+Input: 15 10 10
+
+Enter the priority for tasks under Deployment (Low, Medium, High) (as comma-separated values):
+Input: Medium, Low, Low
+
+Adding tasks for Milestone: Maintenance
+Enter the list of tasks for Maintenance (as comma-separated values):
+Input: Bug Fixing, Performance Tuning, User Training
+
+Enter the hours for tasks under Maintenance (as comma-separated values):
+Input: 20 15 10
+
+Enter the priority for tasks under Maintenance (Low, Medium, High) (as comma-separated values):
+Input: High, High, Low
+
+
+Do you want to add the names for the roles in the RACI Table? (yes or no): Yes
+Enter the name for Product Owner: John Smith
+Enter the name for Business Analyst: Jane Doe
+Enter the name for Financial Lead: Emily Davis
+Enter the name for Design Director: Michael Brown
+Enter the name for CRM Lead: Olivia Johnson
+Enter the name for Head of CRM: Liam Williams
+Enter the name for Senior Stakeholder*: Sophia Martinez
+Enter the name for Senior Stakeholder**: William Garcia
+Enter the name for AGENCY: Creative Solutions Inc.
+```
 
 ## Prerequisites
 ### Python:
