@@ -8,9 +8,9 @@ Generates automatically a Gantt Chart, Project Schedule and RACI Table sheets au
 
 ## Purpose
 
-The Project Management Excel Tools (PMXT) serves as an automated solution for generating detailed gantt charts, project schedule and RACI table in Excel files, ideal for project managers and teams.
+The Project Management Excel Tools (PMXT) serves as an Automated Solution for generating detailed Gantt Charts, Project Schedules and RACI Tables sheets to Excel files, ideal for Project Managers and Teams.
 
-It simplifies the grouping of tasks throughout milestones on workweeks into simple, visual representations, making them easier to understand for stakeholders and essential for planning and tracking the progress of project proposals.
+It simplifies the grouping of Tasks throughout Milestones on Work Weeks into a simple representation, easy to understand for Stakeholders, and essential for planning and tracking the progress of Project Proposals.
 
 ## Usage Instructions
 
