@@ -14,18 +14,18 @@ It simplifies the grouping of Tasks throughout Milestones on Work Weeks into a s
 
 ## Usage Instructions
 
-1. **Prepare the Scripts**  
+1. **Prepare the Scripts:**  
    Ensure that `chronogram.py` and `chronogram.sh` filed are both located in the same directory.
 
-2. **Set Script Permissions**  
+2. **Set Script Permissions:**  
    Open a terminal and navigate to the directory containing the scripts. Give executable permissions to the shell script using the command:
    - `chmod +x chronogram.sh`
 
-3. **Execute the Script**
+3. **Execute the Script:**
    Run the script by typing the following command into the terminal:
    - `./chronogram.sh`
 
-4. **Provide Input Data**
+4. **Provide Input Data:**
    When prompted, provide the following inputs:
 
   4.1 **Year for the Gantt Chart:**
@@ -59,12 +59,12 @@ Use Yes or No option if you would like to enable Priorities for each Task.
 4.7 **List of Priorities for Tasks:**
 If you enabled Priorities, then for each milestone, enter priorities for each task as comma-separated values, using the options: Low, Medium, High.
   
-5. **Access the Chronogram**
+5. **Access the Chronogram:**
    After providing the input, the script will generate two files in the same directory:
 - `chronogram.xlsx: An Excel file with the visual chronogram.`
 - `chronogram.csv: A CSV file with the data used to generate the chronogram.`
 
-6. **Open and view the Chronogram**
+6. **Open and view the Chronogram:**
   Open the chronogram.xlsx file in Excel to view your visual chronogram with three sheets, Gantt Chart Weekly, Gantt Chart Monthly,Project Schedule and RACI Table.
   - 
       ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
@@ -75,7 +75,7 @@ If you enabled Priorities, then for each milestone, enter priorities for each ta
 
       ![Raci Table](./RACI_Table.png)
 
-## Sample Input
+## Sample Input:
 
 ```bash
 motreto@Jorge:/mnt/c/Users/execu/ScheduleChronogram$ 
