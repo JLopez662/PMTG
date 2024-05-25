@@ -1,6 +1,6 @@
 # Project Management Excel Tools (PMXT) 
 
-Generates a visual chronogram, project schedule and RACI Table automatically in Excel, mapping out Milestones and task with hours across workweeks to aid in project management.
+Generates automatically a visual chronogram, project schedule and RACI Table automatically in Excel, mapping out Milestones and task with hours across workweeks to aid in project management.
 - ![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
 - ![Generated Project Schedule](./Project_Schedule.png)
 - ![Generated Raci Table](./RACI_Table.png)
