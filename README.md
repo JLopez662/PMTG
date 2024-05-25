@@ -22,32 +22,32 @@ It simplifies the grouping of tasks throughout milestones on workweeks into simp
 
 3. **Execute the Script**
    Run the script by typing the following command into the terminal:
-   - `chronogram.sh`
+   - `./chronogram.sh`
 
 4. **Provide Input Data**
    When prompted, provide the following inputs:
 
-   Year for the Gantt Chart
+  4.1 **Year for the Gantt Chart:**
    Enter the year for the Gantt Chart. If you leave this empty, the current year will be used.
 
       - Example: `2024`
 
-   Starting Week Date
-   Enter the starting week in MM/DD format. If you leave this empty, it will start from the first week of the year.
+  4.2 **Starting Week Date:**
+   Enter the starting week in MM/DD format. If you leave this empty, instead of dates, it will show Month and Week counters.
 
       - Example: `05/01`
 
-   List of Milestones
+  4.3 **List of Milestones:**
    Enter the list of milestones as comma-separated values.
 
       - Example: `Requirements Gathering, Design, Development, Testing, Deployment, Maintenance`
 
-   Tasks for Each Milestone
+   4.4 **Tasks for Each Milestone:**
    For each milestone, enter the list of tasks as comma-separated values.
 
       - Example for "Requirements Gathering": `Initial Meeting, Stakeholder Interviews, Requirements Documentation`
 
-   Hours for Tasks under Each Milestone
+  4.5 **List of Hours for Tasks:**
    For each milestone, enter the hours for each task as comma-separated values.
 
       - Example for "Requirements Gathering" tasks: `10, 15, 20`
