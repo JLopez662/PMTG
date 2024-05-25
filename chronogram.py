@@ -10,8 +10,7 @@ from openpyxl.cell import MergedCell
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.formatting.rule import Rule
 from openpyxl.styles.differential import DifferentialStyle
-from openpyxl.formatting.rule import CellIsRule, DataBar, IconSet, FormatObject, Rule, ColorScaleRule
-from copy import copy
+from openpyxl.formatting.rule import CellIsRule, Rule, ColorScaleRule
 
 def is_file_open(file_path):
     try:
@@ -441,7 +440,10 @@ def get_role_names():
     roles = ["Product Owner", "Business Analyst", "Financial Lead", "Design Director", 
              "CRM Lead", "Head of CRM", "Senior Stakeholder*", "Senior Stakeholder**", "AGENCY"]
     role_names = {}
-    add_names = input("Do you want to add the names for the roles in the RACI Table header? (yes or no): ").strip().lower()
+
+    add_names = input("Do you want to add the names for the roles in the RACI Table? (yes or no): ").strip().lower()
+    while add_names not in {"yes", "no"}:
+        add_names = input("Invalid input. Please enter 'yes' or 'no': ").strip().lower()
     
     if add_names == "yes":
         for role in roles:
@@ -452,6 +454,7 @@ def get_role_names():
             role_names[role] = role
             
     return role_names
+
 
 def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, task_priorities, filename="chronogram.xlsx"):
     start_col_index = 7
@@ -468,7 +471,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     # Check if file is open
     if is_file_open(filename):
-        print(f"File {filename} is open. Attempting to save with a new name.")
+        print(f"File {filename} is open. Attempting to save with a new name.\n")
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         filename = f"chronogram_{timestamp}.xlsx"
 
@@ -1040,12 +1043,18 @@ yearInput = input("Add the year for the Gantt Chart (leave empty if using curren
 year = int(yearInput) if yearInput else datetime.now().year
 
 print()
-
+# Ask for the starting week date
 start_week = input("Add the starting week (MM/DD) (leave empty if not):\nInput: ").strip()
 while start_week and not validate_date(start_week):
     start_week = input("The format is incorrect. Please use MM/DD format or leave empty:\nInput: ").strip()
 
-print() 
+print()
+# Ask if the user wants to add priorities for the tasks
+add_priorities = input("Do you want to add priorities for the tasks? (yes or no): ").strip().lower()
+while add_priorities not in {"yes", "no"}:
+    add_priorities = input("Invalid input. Please enter 'yes' or 'no': ").strip().lower()
+
+print()
 
 milestoneNames = []
 milestonesInput = input("Enter the list of milestones (as comma-separated values), or leave empty:\nInput: ")
@@ -1055,7 +1064,7 @@ if milestonesInput:
 else:
     milestone_count = 0
 
-print()  
+print()
 
 activityNames = []
 milestones_tasks = []
@@ -1087,25 +1096,38 @@ for index, milestone in enumerate(milestoneNames):
 
     hours = [float(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
 
+    while len(hours) != len(tasks):
+        print(f"The number of hours ({len(hours)}) does not match the number of tasks ({len(tasks)}). Please enter the correct number of hours.")
+        taskHoursInput = input(f"Enter the hours for tasks under {milestone} (as comma-separated values):\nInput: ")
+        while not taskHoursInput or not all(re.match(r'^\d+(\.\d+)?$', x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()):
+            print("")
+            print("Input format is incorrect. Please enter only numbers (integers or floats) separated by commas or spaces.")
+            taskHoursInput = input(f"Add at least one task hour for {milestone} (as comma-separated values):\nInput: ")
+
+        hours = [float(x.strip()) for x in re.split(r'[,\s]+', taskHoursInput) if x.strip()]
+
     print("")
 
-    taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
-    while taskPriorityInput and not validate_task_priorities([x.strip() for x in taskPriorityInput.split(',')]):
-        print("")
-        print("Input format is incorrect. Please enter only 'Low', 'Medium', or 'High' separated by commas.\n")
-        taskPriorityInput = input(f"Add priority for each task under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+    if add_priorities == "yes":
+        taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+        while taskPriorityInput and not validate_task_priorities([x.strip() for x in taskPriorityInput.split(',')]):
+            print("")
+            print("Input format is incorrect. Please enter only 'Low', 'Medium', or 'High' separated by commas.\n")
+            taskPriorityInput = input(f"Add priority for each task under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
 
-    if not taskPriorityInput:
-        priorities = set_default_priorities(tasks)
-    else:
-        priorities = [x.strip().capitalize() for x in taskPriorityInput.split(',')]
-        while len(priorities) != len(tasks):
-            print("The number of priorities must match the number of tasks.")
-            taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
-            if not taskPriorityInput:
-                priorities = set_default_priorities(tasks)
-                break
+        if not taskPriorityInput:
+            priorities = set_default_priorities(tasks)
+        else:
             priorities = [x.strip().capitalize() for x in taskPriorityInput.split(',')]
+            while len(priorities) != len(tasks):
+                print(f"The number of priorities ({len(priorities)}) does not match the number of tasks ({len(tasks)}). Please enter the correct number of priorities.")
+                taskPriorityInput = input(f"Enter the priority for tasks under {milestone} (Low, Medium, High) (as comma-separated values):\nInput: ")
+                if not taskPriorityInput:
+                    priorities = set_default_priorities(tasks)
+                    break
+                priorities = [x.strip().capitalize() for x in taskPriorityInput.split(',')]
+    else:
+        priorities = set_default_priorities(tasks)
 
     milestoneActivityNames = [f"{task}" for task in tasks]
     activityNames.extend(milestoneActivityNames)
@@ -1116,7 +1138,6 @@ for index, milestone in enumerate(milestoneNames):
 
     if index == len(milestoneNames) - 1:
         last_activity = milestoneActivityNames[-1] if milestoneActivityNames else None
-
 
 print("\n") 
 
