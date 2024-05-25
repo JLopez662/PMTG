@@ -26,47 +26,46 @@ The Project Management Excel Tools Generator (PMXTG) serves as an Automated Solu
 4. **Provide Input Data:**
    When prompted, provide the following inputs:
 
-  4.1 **Year for the Gantt Chart:**
-     Enter the year for the Gantt Chart. If you leave this empty, the current year will be used.
-     
-      - Prompt: Add the year for the Gantt Chart (leave empty if using current year):
-      - Example: 2024`
-
-  4.2 **Starting Week Date:**
-     Enter the starting week in MM/DD format. If you leave this empty, instead of dates, it will show Month and Week counters.
+      4.1 **Year for the Gantt Chart:**
+           Enter the year for the Gantt Chart. If you leave this empty, the current year will be used.
+           
+            - Prompt: Add the year for the Gantt Chart (leave empty if using current year):
+            - Example: 2024`
       
-      - Prompt: Add the starting week (MM/DD) (leave empty if not):
-      - Example: `05/01`
+      4.2 **Starting Week Date:**
+           Enter the starting week in MM/DD format. If you leave this empty, instead of dates, it will show Month and Week counters.
+            
+            - Prompt: Add the starting week (MM/DD) (leave empty if not):
+            - Example: `05/01`
+            
+      4.3 **Priorities for Tasks:**
+            Use Yes or No option if you would like to enable Priorities for each Task.
       
-   4.3 **Priorities for Tasks:**
-      Use Yes or No option if you would like to enable Priorities for each Task.
-
-      - Prompt: Do you want to add priorities for the tasks? (yes or no):
-      - Example: `Yes`
-
-   4.4 **List of Milestones:**
-      Enter the list of milestones as comma-separated values.
-
-      - Prompt: Enter the list of milestones (as comma-separated values), or leave empty:
-      - Example: `Requirements Gathering, Design, Development, Testing, Deployment, Maintenance`
-
-   4.5 **Tasks for Each Milestone:**
-      For each milestone, enter the list of tasks as comma-separated values.
-
-      - Prompt: Enter the list of tasks for Current Milestone (as comma-separated values):
-      - Example for "Requirements Gathering": `Initial Meeting, Stakeholder Interviews, Requirements Documentation`
-
-  4.6 **List of Hours for Tasks:**
-     For each milestone, enter the hours for each task as comma-separated values, using integers or floats.
-
-      - Prompt: Enter the hours for tasks under Current Milestone (as comma-separated values):
-      - Example for "Requirements Gathering" tasks: `10, 15, 20`
+            - Prompt: Do you want to add priorities for the tasks? (yes or no):
+            - Example: `Yes`
       
-   4.7 **List of Priorities for Tasks:**
-      If you enabled Priorities, then for each milestone, enter priorities for each task as comma-separated values, using the options: Low, Medium, High.
-
-      - Prompt: Enter the priority for tasks under Current Milestone (Low, Medium, High) (as comma-separated values):
-      - Example for "Low, Medium, High `
+      4.4 **List of Milestones:**
+            Enter the list of milestones as comma-separated values.
+      
+            - Prompt: Enter the list of milestones (as comma-separated values), or leave empty:
+            - Example: `Requirements Gathering, Design, Development, Testing, Deployment, Maintenance`
+      4.5 **Tasks for Each Milestone:**
+            For each milestone, enter the list of tasks as comma-separated values.
+      
+            - Prompt: Enter the list of tasks for Current Milestone (as comma-separated values):
+            - Example for "Requirements Gathering": `Initial Meeting, Stakeholder Interviews, Requirements Documentation`
+      
+      4.6 **List of Hours for Tasks:**
+           For each milestone, enter the hours for each task as comma-separated values, using integers or floats.
+      
+            - Prompt: Enter the hours for tasks under Current Milestone (as comma-separated values):
+            - Example for "Requirements Gathering" tasks: `10, 15, 20`
+            
+      4.7 **List of Priorities for Tasks:**
+            If you enabled Priorities, then for each milestone, enter priorities for each task as comma-separated values, using the options: Low, Medium, High.
+      
+            - Prompt: Enter the priority for tasks under Current Milestone (Low, Medium, High) (as comma-separated values):
+            - Example for "Low, Medium, High `
   
 5. **Access the Chronogram:**
    After providing the input, the script will generate two files in the same directory:
