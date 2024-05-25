@@ -1,0 +1,23 @@
+2024
+05/10
+Yes
+Requirements Gathering, Design, Development, Testing, Deployment, Maintenance 
+Initial Meeting, Stakeholder Interviews, Requirements Documentation 
+10 15 20 
+Medium, Low, Low 
+System Architecture Design, Database Schema Design, UI/UX Design 
+30 20 25 
+Low, Low, Low 
+Frontend Development, Backend Development, Integration 
+40 50 30 
+Medium, Medium, Medium 
+Unit Testing, Integration Testing, User Acceptance Testing 
+20 25 30 
+High, Medium, Low 
+Prepare Deployment Environment, Deployment, Post-Deployment Verification 
+15 10 10 
+Medium, Low, Low 
+Bug Fixing, Performance Tuning, User Training 
+20 15 10 
+High, High, Low 
+No
