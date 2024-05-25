@@ -65,15 +65,31 @@ The Project Management Excel Tools Generator (PMXTG) serves as an Automated Solu
             If you enabled Priorities, then for each milestone, enter priorities for each task as comma-separated values, using the options: Low, Medium, High.
       
             - Prompt: Enter the priority for tasks under Current Milestone (Low, Medium, High) (as comma-separated values):
-            - Example for "Low, Medium, High `
+            - Example for "Requirements Gathering"  "Low, Medium, High `
+
+      4.8 **Names for the Roles Representatives in the RACI Table:**
+            Use Yes or No option if you would like to enable Priorities for each Task.
+   
+         - Prompt: Do you want to add the names for the roles in the RACI Table?:
+         - Example: "Yes `
+
+      4.9 **Add Names for each Role Representative:**
+            Fill the Name of the current representative for each Role, to populate on the RACI Table.
+   
+         - Prompt: Enter the name for Product Owner:
+         - Example: "John Smith `
+         - Prompt: Enter the name for Financial Lead:
+         - Example: "Emily Davis `
+         - Prompt: Enter the name for AGENCY:
+         - Example: "Creative Solutions Inc. `
   
-5. **Access the Chronogram:**
+6. **Access the Generated Excel File with the Project Management Tool Sheets:**
    After providing the input, the script will generate two files in the same directory:
    
       - `chronogram.xlsx: An Excel file with the Gantt Chart, Project Proposal and RACI Tables sheets.`
       - `chronogram.csv: A CSV file with the data used to generate the Gantt Chart.`
 
-6. **Open and view the Chronogram:**
+7. **Open and view the Chronogram:**
   Open the chronogram.xlsx file in Excel to view your visual chronogram with three sheets, Gantt Chart Weekly, Gantt Chart Monthly,Project Schedule and RACI Table.
   - 
       ![Chronogram Weekly](./Gantt_Chart_Weeks.png)
