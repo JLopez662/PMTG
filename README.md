@@ -1,6 +1,6 @@
 # Project Management Excel Tools (PMXT) 
 
-Generates automatically a Gantt Chart, Project Schedule and RACI Table sheets in Excel, from a simple input, mapping out Milestones including Task with Hours across Work Weeks, to aid in Project Management.
+Generates automatically Gantt Chart, Project Schedule and RACI Table sheets in Excel, from a simple input, mapping out Milestones including Task with Hours across Work Weeks, to aid in Project Management.
 
 - ![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
 - ![Generated Project Schedule](./Project_Schedule.png)
