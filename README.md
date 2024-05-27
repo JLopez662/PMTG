@@ -1,6 +1,6 @@
 # Project Management Excel Tools Generator (PMXTG) 
 
-Generates Gantt Charts, Project Schedules, and RACI Table sheets in Excel from simple input, mapping out Milestones that include Tasks with Hours across Work Weeks, ideal for Project Management.
+Automatically generate Gantt Charts, Project Schedule and RACI Table sheets in Excel. With a simple input, maps out Milestones that include Tasks with Hours across Work Weeks, that's ideal for Project Management.
 
 **Generated Gantt Charts:**  
 ![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
@@ -10,7 +10,7 @@ Generates Gantt Charts, Project Schedules, and RACI Table sheets in Excel from s
 
 ## Purpose
 
-The Project Management Excel Tools Generator (PMXTG) serves as an automated solution for generating detailed Gantt Charts, Project Schedules, and RACI Tables in Excel files. It is ideal for Project Managers to use during project proposals and presentations to stakeholders or teams.
+The Project Management Excel Tools Generator (PMXTG) serves as an Automated Solution for generating detailed Gantt Charts, Project Schedules and RACI Tables sheets to an Excel file. Great for PMs during Project Proposals, and presentations to Stakeholders or Teams.
 
 ## Usage Instructions
 
