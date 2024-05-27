@@ -1,18 +1,39 @@
 # Project Management Excel Tools Generator (PMXTG) 
+![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-brightgreen)
 
-Automatically generate Gantt Charts, Project Schedule and RACI Table sheets in Excel. With a simple input, maps out Milestones that include Tasks with Hours across Work Weeks, that's ideal for Project Management.
+Automatically generate Gantt Chart, Project Schedule and RACI Table sheets in Excel with simple inputs.
 
-**Generated Gantt Charts:**  
-![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
-
-**Generated Project Schedule and RACI Table:**  
-![Generated RACI Table and Project Schedule](./RACI_Schedule_Gif.gif)
-
-## Purpose
+## Project Objective
 
 The Project Management Excel Tools Generator (PMXTG) serves as an Automated Solution for generating detailed Gantt Charts, Project Schedules and RACI Tables sheets to an Excel file. Great for PMs during Project Proposals, and presentations to Stakeholders or Teams.
 
-## Usage Instructions
+## Methods
+- Data Input and Validation
+- Automated Excel Sheet Generation
+- Visualization of Gantt Charts and Schedules
+
+   - **Generated Gantt Charts:**
+   ![Generated Gantt Chart](./Gantt_Chart_Gif.gif)
+
+
+   - **Generated Project Schedule and RACI Table:**
+   ![Generated RACI Table and Project Schedule](./RACI_Schedule_Gif.gif)
+
+
+## Technologies
+- `Python 3` 
+- `Shell Scripting (Bash)`
+
+  ### Python Libraries
+   - `pandas`
+   - `openpyxl`
+   - `re`
+   - `os`
+
+## Project Description
+The PMXTG script allows users to generate comprehensive project management tools in Excel format. By providing inputs such as milestones, tasks, and hours, users can create detailed Gantt charts, Project Schedules, and RACI tables that help in effective project planning and tracking. The tool is designed to streamline the process of project documentation, making it accessible for project managers to create professional documents quickly.
+
+## Steps
 
 1. **Prepare the Scripts:**  
    Ensure that `chronogram.py` and `chronogram.sh` files are both located in the same directory.
@@ -93,14 +114,18 @@ The Project Management Excel Tools Generator (PMXTG) serves as an Automated Solu
 
 7. **Open and View the Chronogram:**  
    Open the `chronogram.xlsx` file in Excel to view your visual chronogram with three sheets: Gantt Chart Weekly, Gantt Chart Monthly, Project Schedule, and RACI Table.
-   
-   ![Gantt_Chart Weekly](./Gantt_Chart_Weeks.png)
-   
-   ![Gantt Chart Monthly](./Gantt_Chart_Months.png)
-   
-   ![Project Schedule](./Project_Schedule.png)
-   
-   ![RACI Table](./RACI_Table.png)
+
+   - **Generated Gantt Chart Weekly:**
+   - ![Gantt_Chart Weekly](./Gantt_Chart_Weeks.png)
+
+   - **Generated Gantt Chart Monthly:**
+   - ![Gantt Chart Monthly](./Gantt_Chart_Months.png)
+
+   - **Generated Project Schedule:**
+   - ![Project Schedule](./Project_Schedule.png)
+
+   - **Generated RACI Table:**
+   - ![RACI Table](./RACI_Table.png)
 
 ## Sample Input
 
@@ -179,23 +204,23 @@ Enter the name for Senior Stakeholder**: William Garcia
 Enter the name for AGENCY: Creative Solutions Inc.
 ```
 
-## Prerequisites
+## Conclusion
+The PMXTG provides an efficient and user-friendly approach to creating essential project management documents. By automating the generation of Gantt Charts, Project Schedules, and RACI Tables, it saves time and reduces the potential for errors. This tool enables project managers to easily visualize and organize their project tasks, timelines, and responsibilities, making it an invaluable asset for effective project management and successful project delivery.
 
-### Python
-Please note that Python 3 must be installed on your system to use this script. If you do not have Python 3, please install it from the [official Python website](https://www.python.org/) or use your system's package manager.
+## Contact
 
-### Python Libraries
-Before running this script, you must have the following Python libraries installed:
+- [LinkedIn](https://www.linkedin.com/in/jlopezgonzalez/)
+- [GitHub](https://github.com/JLopez662)
+- [GitLab](https://gitlab.com/jorge.lopez19)
 
-- `pandas`
-- `openpyxl`
-- `re`
-- `os`
-
-
-You can install these libraries using pip with the following command:
-
-- `pip install pandas`
-- `pip install openpyxl`
-- `pip install re`
-- `pip install os`
+<p align="center">
+  <a href="https://www.linkedin.com/in/jlopezgonzalez/">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/0/01/LinkedIn_Logo.svg" alt="LinkedIn" width="150" height="50">
+  </a>
+  <a href="https://github.com/JLopez662">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg" alt="GitHub" width="50" height="50">
+  </a>
+  <a href="https://gitlab.com/jorge.lopez19">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/GitLab_logo.svg" alt="GitLab" width="150" height="50">
+  </a>
+</p>
