@@ -31,20 +31,20 @@ The Project Management Tools Generator (PMTG) serves as an Automated Solution fo
    - `os`
 
 ## Project Description
-The PMXTG script allows users to generate comprehensive project management tools in Excel format. By providing inputs such as milestones, tasks, and hours, users can create detailed Gantt charts, Project Schedules, and RACI tables that help in effective project planning and tracking. The tool is designed to streamline the process of project documentation, making it accessible for project managers to create professional documents quickly.
+The PMTG script allows users to generate comprehensive project management tools in Excel format. By providing inputs such as milestones, tasks, and hours, users can create detailed Gantt charts, Project Schedules, and RACI tables that help in effective project planning and tracking. The tool is designed to streamline the process of project documentation, making it accessible for project managers to create professional documents quickly.
 
 ## Steps
 
 1. **Prepare the Scripts:**  
-   Ensure that `chronogram.py` and `chronogram.sh` files are both located in the same directory.
+   Ensure that `pmtg.py` and `pmtg.sh` files are both located in the same directory.
 
 2. **Set Script Permissions:**  
    Open a terminal and navigate to the directory containing the scripts. Give executable permissions to the shell script using the command:
-   - `chmod +x chronogram.sh`
+   - `chmod +x pmtg.sh`
 
 3. **Execute the Script:**  
    Run the script by typing the following command into the terminal:
-   - `./chronogram.sh`
+   - `./pmtg.sh`
 
 4. **Provide Input Data:**  
    When prompted, provide the following inputs:
@@ -109,11 +109,11 @@ The PMXTG script allows users to generate comprehensive project management tools
 
 6. **Access the Generated Excel File with the Project Management Tool Sheets:**  
    After providing the input, the script will generate two files in the same directory:
-   - `chronogram.xlsx`: An Excel file with the Gantt Chart, Project Proposal, and RACI Table sheets.
-   - `chronogram.csv`: A CSV file with the data used to generate the Gantt Chart.
+   - `Project_Management_Tools.xlsx`: An Excel file with the Gantt Chart, Project Proposal, and RACI Table sheets.
+   - `Project_Management_Tools.csv`: A CSV file with the data used to generate the Gantt Chart.
 
-7. **Open and View the Chronogram:**  
-   Open the `chronogram.xlsx` file in Excel to view your visual chronogram with three sheets: Gantt Chart Weekly, Gantt Chart Monthly, Project Schedule, and RACI Table.
+7. **Open and View the Project_Management_Tools Generated:**  
+   Open the `Project_Management_Tools.xlsx` file in Excel to view your Excel file with four sheets: Gantt Chart Weekly, Gantt Chart Monthly, Project Schedule, and RACI Table.
 
    - **Generated Gantt Chart Weekly:**
    - ![Gantt_Chart Weekly](./Gantt_Chart_Weeks.png)
@@ -130,7 +130,7 @@ The PMXTG script allows users to generate comprehensive project management tools
 ## Sample Input
 
 ```bash
-motreto@Jorge:/mnt/c/Users/execu/ScheduleChronogram$ ./chronogram.sh
+$ ./pmtg.sh
 Add the year for the Gantt Chart (leave empty if using current year):
 Input: 2024
 
@@ -205,7 +205,7 @@ Enter the name for AGENCY: Creative Solutions Inc.
 ```
 
 ## Conclusion
-The PMXTG provides an efficient and user-friendly approach to creating essential project management documents. By automating the generation of Gantt Charts, Project Schedules, and RACI Tables, it saves time and reduces the potential for errors. This tool enables project managers to easily visualize and organize their project tasks, timelines, and responsibilities, making it an invaluable asset for effective project management and successful project delivery.
+The PMTG provides an efficient and user-friendly approach to creating essential project management documents. By automating the generation of Gantt Charts, Project Schedules, and RACI Tables, it saves time and reduces the potential for errors. This tool enables project managers to easily visualize and organize their project tasks, timelines, and responsibilities, making it an invaluable asset for effective project management and successful project delivery.
 
 ## Contact
 
