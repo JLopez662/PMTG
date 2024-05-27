@@ -482,7 +482,7 @@ def Project_Management_Tools_To_Excel(project_management_tools, year, start_week
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         backup_filename = f"project_management_tools{timestamp}.xlsx"
         df.to_excel(backup_filename, index=False, header=False)
-        print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
+        print(f"Permission denied. The Project Management Tools Excel file has been saved as {backup_filename}.")
 
     for col in range(start_col_index - 1):
         df.insert(col, 'Empty{}'.format(col), [''] * df.shape[0])
@@ -1027,7 +1027,7 @@ def Project_Management_Tools_To_Excel(project_management_tools, year, start_week
         df.to_csv("Project_Management_Tools.csv", index=False)
         print("")
         print("The excel file has been generated in the directory:", current_directory, "\n")
-        print(f"The Gantt Chart Excel file has been successfully generated as {filename}.")
+        print(f"The Project Management Tools Excel file has been successfully generated as {filename}.")
     except PermissionError:
         print(f"Permission denied for file {filename}. Attempting to save with a new name.")
         timestamp = time.strftime("%Y%m%d-%H%M%S")
@@ -1036,7 +1036,7 @@ def Project_Management_Tools_To_Excel(project_management_tools, year, start_week
         df.to_excel(backup_filename, index=False, header=False)
         df.to_csv(f"Project_Management_Tools{timestamp}.csv", index=False)
         print("The excel file has been generated in the directory:", current_directory, "\n")
-        print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
+        print(f"Permission denied. The Project Management Tools Excel file has been saved as {backup_filename}.")
 
 
 yearInput = input("Add the year for the Gantt Chart (leave empty if using current year):\nInput: ").strip()
