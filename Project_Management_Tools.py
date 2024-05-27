@@ -36,11 +36,11 @@ def create_sheet_copy(wb, source_sheet_name, target_sheet_name):
     return target_sheet
 
 def allocateTasksToWeeks(milestones_tasks):
-    chronogram = []
+    project_management_tools = []
     last_end_week = 0
 
     for milestone_name, tasks in milestones_tasks:
-        if len(chronogram) > 0:
+        if len(project_management_tools) > 0:
             last_end_week += 1
 
         colWeekHours = [40.0] * (last_end_week + 1)
@@ -71,11 +71,11 @@ def allocateTasksToWeeks(milestones_tasks):
 
             milestone_rows.append(taskRow)
 
-        chronogram.extend(milestone_rows)
+        project_management_tools.extend(milestone_rows)
         if milestone_name != milestones_tasks[-1][0]:
-            chronogram.append([''] * len(colWeekHours))
+            project_management_tools.append([''] * len(colWeekHours))
 
-    return chronogram
+    return project_management_tools
 
 all_week_dates = []
 
@@ -86,7 +86,7 @@ def validate_date(date_text):
     except ValueError:
         return False
 
-def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours, row_offset=4):
+def add_task_dates(project_management_tools, start_date, ws, ws_project_schedule, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours, row_offset=4):
     if not start_date:
         return None
 
@@ -110,7 +110,7 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
 
     task_hours_index = 0
 
-    for index, task_row in enumerate(chronogram):
+    for index, task_row in enumerate(project_management_tools):
         if set(task_row) == {''}:
             continue
 
@@ -233,8 +233,8 @@ def add_task_dates(chronogram, start_date, ws, ws_project_schedule, ws_month, ye
 
     return None
 
-def calculate_total_weeks(chronogram):
-    max_length = max(len(row) for row in chronogram if set(row) != {''})
+def calculate_total_weeks(project_management_tools):
+    max_length = max(len(row) for row in project_management_tools if set(row) != {''})
     return max_length
 
 def adjust_column_settings(ws, ws_month, start_col_index, num_weeks, date_col_width=20):  # Increased width for demonstration
@@ -456,9 +456,9 @@ def get_role_names():
     return role_names
 
 
-def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNames, task_hours, task_priorities, filename="chronogram.xlsx"):
+def Project_Management_Tools_To_Excel(project_management_tools, year, start_week, activity_names, milestoneNames, task_hours, task_priorities, filename="Project_Management_Tools.xlsx"):
     start_col_index = 7
-    num_weeks = calculate_total_weeks(chronogram)
+    num_weeks = calculate_total_weeks(project_management_tools)
 
     thin_border = Border(
         left=Side(style='thin'),
@@ -467,20 +467,20 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
         bottom=Side(style='thin')
     )
 
-    df = pd.DataFrame(chronogram)
+    df = pd.DataFrame(project_management_tools)
 
     # Check if file is open
     if is_file_open(filename):
         print(f"File {filename} is open. Attempting to save with a new name.\n")
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        filename = f"chronogram_{timestamp}.xlsx"
+        filename = f"project_management_tools{timestamp}.xlsx"
 
     try:
         df.to_excel(filename, index=False, header=False)
     except PermissionError:
         print(f"Permission denied for file {filename}. Attempting to save with a new name.")
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        backup_filename = f"chronogram_{timestamp}.xlsx"
+        backup_filename = f"project_management_tools{timestamp}.xlsx"
         df.to_excel(backup_filename, index=False, header=False)
         print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
 
@@ -574,26 +574,26 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     task_milestone_mapping = {}
     milestone_row_mapping = {}
 
-    new_chronogram = []
+    new_project_management_tools = []
     new_activity_names = []
 
-    for index, row in enumerate(chronogram):
+    for index, row in enumerate(project_management_tools):
         if set(row) == {''}:
             milestone_index += 1
             task_index = 1
             continue
 
         if milestoneNames[milestone_index] not in milestone_row_mapping:
-            milestone_row_mapping[milestoneNames[milestone_index]] = len(new_chronogram) + row_offset
-            new_chronogram.append([''] * len(row))
+            milestone_row_mapping[milestoneNames[milestone_index]] = len(new_project_management_tools) + row_offset
+            new_project_management_tools.append([''] * len(row))
             new_activity_names.append(milestoneNames[milestone_index])
 
         task_label = f"Task {milestone_index + 1}.{task_index}"
-        task_row_mapping[len(new_chronogram)] = len(new_chronogram) + row_offset
-        task_milestone_mapping[len(new_chronogram)] = milestoneNames[milestone_index]
+        task_row_mapping[len(new_project_management_tools)] = len(new_project_management_tools) + row_offset
+        task_milestone_mapping[len(new_project_management_tools)] = milestoneNames[milestone_index]
         task_index += 1
 
-        new_chronogram.append(row)
+        new_project_management_tools.append(row)
         if activity_index < len(activity_names):
             new_activity_names.append(activity_names[activity_index])
             activity_index += 1
@@ -616,7 +616,7 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
 
     milestone_task_priorities = {}
 
-    for index, row in enumerate(new_chronogram):
+    for index, row in enumerate(new_project_management_tools):
         excel_row = row_offset + index
 
         if set(row) == {''}:
@@ -700,8 +700,8 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     adjust_column_settings(ws_project_schedule, ws_month, start_col_index, num_weeks, date_col_width=20)  # Adjust the new sheet
     adjust_column_settings(ws_raci_table, ws_month, start_col_index, num_weeks, date_col_width=20)  # Adjust the RACI Table sheet
 
-    add_task_dates(new_chronogram, start_week, ws, ws_project_schedule, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
-    add_task_dates(new_chronogram, start_week, ws, ws_raci_table, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
+    add_task_dates(new_project_management_tools, start_week, ws, ws_project_schedule, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
+    add_task_dates(new_project_management_tools, start_week, ws, ws_raci_table, ws_month, year, num_weeks, task_row_mapping, task_milestone_mapping, milestone_row_mapping, task_hours)
 
 
     # Define the dropdown values for the "Complete" column
@@ -1024,17 +1024,17 @@ def chronogramToExcel(chronogram, year, start_week, activity_names, milestoneNam
     try:
         df.to_excel(filename, index=False, header=False)
         wb.save(filename)
-        df.to_csv("chronogram.csv", index=False)
+        df.to_csv("Project_Management_Tools.csv", index=False)
         print("")
         print("The excel file has been generated in the directory:", current_directory, "\n")
         print(f"The Gantt Chart Excel file has been successfully generated as {filename}.")
     except PermissionError:
         print(f"Permission denied for file {filename}. Attempting to save with a new name.")
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        backup_filename = f"chronogram_{timestamp}.xlsx"
+        backup_filename = f"Project_Management_Tools{timestamp}.xlsx"
         wb.save(backup_filename)
         df.to_excel(backup_filename, index=False, header=False)
-        df.to_csv(f"chronogram_{timestamp}.csv", index=False)
+        df.to_csv(f"Project_Management_Tools{timestamp}.csv", index=False)
         print("The excel file has been generated in the directory:", current_directory, "\n")
         print(f"Permission denied. The Gantt Chart Excel file has been saved as {backup_filename}.")
 
@@ -1141,5 +1141,5 @@ for index, milestone in enumerate(milestoneNames):
 
 print("\n") 
 
-chronogram = allocateTasksToWeeks(milestones_tasks)
-chronogramToExcel(chronogram, year, start_week if start_week.strip() else "", activityNames, milestoneNames, task_hours, task_priorities, "chronogram.xlsx")
+project_management_tools = allocateTasksToWeeks(milestones_tasks)
+Project_Management_Tools_To_Excel(project_management_tools, year, start_week if start_week.strip() else "", activityNames, milestoneNames, task_hours, task_priorities, "Project_Management_Tools.xlsx")
