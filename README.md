@@ -5,7 +5,7 @@ Automatically generate Gantt Chart, Project Schedule and RACI Table sheets in Ex
 
 ## Project Objective
 
-The Project Management Tools Generator (PMTG) serves as an Automated Solution for generating detailed Gantt Charts, Project Schedules and RACI Tables sheets to an Excel file. Great for PMs during Project Proposals, and presentations to Stakeholders or Teams.
+The Project Management Tools Generator (PMTG) serves as an Automated Solution for generating customized and detailed Gantt Charts, Project Schedules and RACI Tables sheets to an Excel file. Great for PMs during Project Proposals, and presentations to Stakeholders or Teams.
 
 ## Methods
 - Data Input and Validation
