@@ -1,7 +1,6 @@
 # Project Management Tools Generator (PMTG) 
-![Project Status: Active](https://img.shields.io/badge/Project%20Status-Active-brightgreen)
 
-Automatically generate Gantt Chart, Project Schedule and RACI Table sheets in Excel with simple inputs.
+Generates Gantt charts, project schedules and RACI tables into an Excel file for project proposals.
 
 ## Project Objective
 
@@ -27,8 +26,6 @@ The Project Management Tools Generator (PMTG) serves as an Automated Solution fo
   ### Python Libraries
    - `pandas`
    - `openpyxl`
-   - `re`
-   - `os`
 
 ## Project Description
 The PMTG script allows users to generate comprehensive project management tools in Excel format. By providing inputs such as milestones, tasks, and hours, users can create detailed Gantt charts, Project Schedules, and RACI tables that help in effective project planning and tracking. The tool is designed to streamline the process of project documentation, making it accessible for project managers to create professional documents quickly.
@@ -92,7 +89,7 @@ The PMTG script allows users to generate comprehensive project management tools 
         - **Example for "Requirements Gathering":** `Medium, Low, Low`
 
    4.8 **Names for the Roles Representatives in the RACI Table:**  
-        Use Yes or No option if you would like to enable Priorities for each Task.
+        Use Yes or No option if you would like to add the names of the people in each RACI role.
    
         - **Prompt:** Do you want to add the names for the roles in the RACI Table? (yes or no)
         - **Example:** `Yes`
@@ -107,12 +104,12 @@ The PMTG script allows users to generate comprehensive project management tools 
         - **Prompt:** Enter the name for AGENCY
         - **Example:** `Creative Solutions Inc.`
 
-6. **Access the Generated Excel File with the Project Management Tool Sheets:**  
+5. **Access the Generated Excel File with the Project Management Tool Sheets:**  
    After providing the input, the script will generate two files in the same directory:
-   - `Project_Management_Tools.xlsx`: An Excel file with the Gantt Chart, Project Proposal, and RACI Table sheets.
+   - `Project_Management_Tools.xlsx`: An Excel file with the Gantt Chart, Project Schedule and RACI Table sheets.
    - `Project_Management_Tools.csv`: A CSV file with the data used to generate the Gantt Chart.
 
-7. **Open and View the Project_Management_Tools Generated:**  
+6. **Open and View the Project_Management_Tools Generated:**  
    Open the `Project_Management_Tools.xlsx` file in Excel to view your Excel file with four sheets: Gantt Chart Weekly, Gantt Chart Monthly, Project Schedule, and RACI Table.
 
    - **Generated Gantt Chart Weekly:**
