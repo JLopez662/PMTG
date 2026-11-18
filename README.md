@@ -113,16 +113,16 @@ The PMTG script allows users to generate comprehensive project management tools 
    Open the `Project_Management_Tools.xlsx` file in Excel to view your Excel file with four sheets: Gantt Chart Weekly, Gantt Chart Monthly, Project Schedule, and RACI Table.
 
    - **Generated Gantt Chart Weekly:**
-   - ![Gantt_Chart Weekly](./Gantt_Chart_Weeks.png)
+   ![Gantt_Chart Weekly](./Gantt_Chart_Weeks.png)
 
    - **Generated Gantt Chart Monthly:**
-   - ![Gantt Chart Monthly](./Gantt_Chart_Months.png)
+   ![Gantt Chart Monthly](./Gantt_Chart_Months.png)
 
    - **Generated Project Schedule:**
-   - ![Project Schedule](./Project_Schedule.png)
+   ![Project Schedule](./Project_Schedule.png)
 
    - **Generated RACI Table:**
-   - ![RACI Table](./RACI_Table.png)
+   ![RACI Table](./RACI_Table.png)
 
 ## Sample Input
 
